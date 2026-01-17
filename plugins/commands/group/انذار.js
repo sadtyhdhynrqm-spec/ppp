@@ -1,10 +1,10 @@
 const config = {
-    name: "warn",
+    name: "انذار",
     description: "warn user",
     usage: "<reset> <@tag/reply> <reason>",
     cooldown: 3,
     permissions: [1, 2],
-    credits: "XaviaTeam",
+    credits: "ᏕᎥᏁᎨᎧ",
 };
 
 const langData = {
