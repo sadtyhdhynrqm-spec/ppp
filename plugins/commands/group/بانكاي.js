@@ -1,10 +1,10 @@
 const config = {
-    name: "kick",
+    name: "بانكاي",
     description: "kick user",
     usage: "[reply/@mention]",
     cooldown: 5,
     permissions: [1],
-    credits: "XaviaTeam",
+    credits: "ᏕᎥᏁᎨᎧ",
 };
 
 const langData = {
