@@ -1,10 +1,10 @@
 const config = {
-    name: "wanted",
+    name: "وانتد ",
     description: "wanted image creator",
     usage: "[@mention/reply] [text]",
     cooldown: 3,
     permissions: [0, 1, 2],
-    credits: "XaviaTeam",
+    credits: "ᏕᎥᏁᎨᎧ",
 };
 
 const langData = {
