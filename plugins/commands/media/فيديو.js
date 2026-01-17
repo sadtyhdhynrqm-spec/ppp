@@ -5,13 +5,13 @@ import { statSync } from "fs";
 const _48MB = 48 * 1024 * 1024;
 
 const config = {
-    name: "video",
+    name: "فيديو",
     aliases: ['play', 'yt2mp4'],
     version: "1.0.3",
     description: "Play a video from youtube",
     usage: '<keyword/url>',
     cooldown: 30,
-    credits: "XaviaTeam",
+    credits: "ᏕᎥᏁᎨᎧ",
     extra: {
         "MAX_VIDEOS": 6
     }
