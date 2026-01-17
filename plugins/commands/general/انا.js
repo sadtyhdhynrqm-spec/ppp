@@ -1,5 +1,5 @@
 const config = {
-    name: "source",
+    name: "انا",
     aliases: ["code", "about"],
     description: "Show source code of bot"
 }
