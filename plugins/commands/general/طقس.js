@@ -1,5 +1,5 @@
 const config = {
-    name: "weather",
+    name: "طقس",
     description: "Get weather info",
     usage: "[location]",
     cooldown: 3,
