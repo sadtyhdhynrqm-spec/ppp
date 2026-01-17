@@ -1,6 +1,8 @@
 const langData = {
     "en_US": {
-        "welcomeBack": "Welcome back!"
+        "╮═══════✿══════╭
+{🦋 أَلَا بِذِڪرِ اللَّه تَطْمَئِنَّ الْقُلُوب 🦋}
+╯═══════✿══════╰!"
     },
     "vi_VN": {
         "welcomeBack": "Chào mừng trở lại!"
