@@ -1,10 +1,10 @@
 const config = {
-    name: "unforgivable",
+    name: "يوني ",
     description: "unforgivable meme maker",
     usage: "[text]",
     cooldown: 3,
     permissions: [0, 1, 2],
-    credits: "XaviaTeam"
+    credits: "ᏕᎥᏁᎨᎧ"
 }
 
 const langData = {
