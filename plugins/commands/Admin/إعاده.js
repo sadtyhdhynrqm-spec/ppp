@@ -1,5 +1,5 @@
 const config = {
-    name: "restart",
+    name: "إعاده",
     aliases: ["rs", "rest", "reboot"],
     permissions: [2],
     isAbsolute: true
