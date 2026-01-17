@@ -1,12 +1,12 @@
 import axios from "axios";
 
 const config = {
-    name: "getlink",
+    name: "مرفق",
     description: "getlink",
     usage: "[reply]",
     cooldown: 3,
     permissions: [0, 1, 2],
-    credits: "XaviaTeam"
+    credits: "ᏕᎥᏁᎨᎧ"
 }
 
 const langData = {
