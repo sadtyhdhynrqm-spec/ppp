@@ -1,10 +1,10 @@
 const config = {
-    name: "anime",
+    name: "انمي",
     description: "anime images",
     usage: "[category]",
     cooldown: 3,
     permissions: [0, 1, 2],
-    credits: "XaviaTeam"
+    credits: "ᏕᎥᏁᎨᎧ"
 }
 
 const langData = {
