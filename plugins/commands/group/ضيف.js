@@ -1,11 +1,11 @@
 const config = {
-    name: "adduser",
+    name: "ضيف",
     aliases: ["add"],
     description: "Add user to group",
     usage: "[uid/profileUrl]",
     cooldown: 3,
     permissions: [1],
-    credits: "XaviaTeam",
+    credits: "ᏕᎥᏁᎨᎧ",
 };
 
 const langData = {
