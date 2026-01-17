@@ -1,12 +1,12 @@
 const config = {
-    name: "safebooru",
+    name: "ساموراي",
     aliases: ["sb"],
     description: "Get images from safebooru",
     version: "0.0.1-beta",
     usage: "[tag]",
     cooldown: 5,
     permissions: [0, 1, 2],
-    credits: "XaviaTeam",
+    credits: "ᏕᎥᏁᎨᎧ",
 };
 
 async function onCall({ message, args }) {
