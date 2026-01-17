@@ -5,13 +5,13 @@ import stringSimilarity from "string-similarity";
 import ytdl from "ytdl-core";
 
 const config = {
-    name: "bandori",
+    name: "باندوري",
     aliases: ["bangdream", "band"],
     version: "1.0.2",
     description: "Play BanG Dream! songs, garupa PICO videos, and more!",
     usage: "<song> | <pico> | <pull>",
     cooldown: 5,
-    credits: "XaviaTeam",
+    credits: "ᏕᎥᏁᎨᎧ",
     extra: {
         pullRate: {
             _SPECIAL: 2,
