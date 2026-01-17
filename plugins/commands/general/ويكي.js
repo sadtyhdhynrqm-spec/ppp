@@ -1,7 +1,7 @@
 import wiki from 'wikijs'
 
 const config = {
-    name: "wiki",
+    name: "ويكي",
     description: "search on wikipedia",
     usage: "[keyword]",
     cooldown: 3,
