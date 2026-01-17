@@ -1,10 +1,10 @@
 const config = {
-    name: "resend",
+    name: "تكرار",
     permissions: [1, 2],
     description: "Turn on/off resend message",
     usage: "[on/off]",
     cooldown: 5,
-    credits: "XaviaTeam"
+    credits: "ᏕᎥᏁᎨᎧ"
 }
 
 const langData = {
