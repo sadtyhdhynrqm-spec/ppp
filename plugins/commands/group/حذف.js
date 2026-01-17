@@ -1,11 +1,11 @@
 const config = {
-    name: "unsend",
+    name: "حذف",
     aliases: ["gỡ"],
     description: "Unsend bot's message",
     usage: "[reply/on/off]",
     cooldown: 3,
     permissions: [0, 1, 2],
-    credits: "XaviaTeam"
+    credits: "ᏕᎥᏁᎨᎧ"
 }
 
 const langData = {
@@ -87,7 +87,7 @@ async function onCall({ message, args, getLang, data, userPermissions }) {
 
             return global.api.unsendMessage(targetMessageID, (e) => {
                 if (e) return message.react("❌");
-                message.react("✅");
+                message.react("💠");
             });
         }
     } catch (err) {
