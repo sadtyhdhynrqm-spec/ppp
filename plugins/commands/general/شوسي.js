@@ -1,5 +1,5 @@
 const config = {
-    name: "choose",
+    name: "شوسي",
     usage: "option1 | option2 | option3 | ...",
     description: "Choose one of the options",
     cooldown: 5,
