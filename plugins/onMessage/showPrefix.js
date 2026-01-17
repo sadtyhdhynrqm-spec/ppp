@@ -2,13 +2,13 @@ const langData = {
     "en_US": {
         "dev.info": `
 ╮═══════ᏕᎥᏁᎨᎧ══════╭
-Nam:ᏕᎥᏁᎨᎧᎯᏴᎨᏟᎻᎥᎯᎶᎯ
-Age      : 17
-Country  : السودان
+Nam:   ᏕᎥᏁᎨᎧᎯᏴᎨᏟᎻᎥᎯᎶᎯ
+Age      :     17
+Country  :     السودان
 
-Bot Name : كيفن بوت
-System   : Active
-🔑 Prefix   : {prefix}
+Bot Name :      كيفن بوت
+System   :      Active
+🔑 Prefix   :[ {prefix}] 
 ╯═══════ᏕᎥᏁᎨᎧ══════╰
 `
     }
