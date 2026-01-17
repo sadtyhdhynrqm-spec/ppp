@@ -1,12 +1,12 @@
 import { join } from "path";
 
 const config = {
-    name: "setjoin",
+    name: "دخول",
     description: "set join message/gif",
     usage: "[text/reply/help]",
     cooldown: 3,
     permissions: [1, 2],
-    credits: "XaviaTeam"
+    credits: "ᏕᎥᏁᎨᎧ"
 }
 
 const langData = {
