@@ -4,22 +4,22 @@ const config = {
     description: "Send notification to all groups",
     usage: "[message/reply]",
     permissions: [2],
-    credits: "XaviaTeam"
+    credits: "ᏕᎥᏁᎨᎧ"
 }
 
 const langData = {
     "en_US": {
-        "sendnoti.message": "== ⌈ NOTIFICATION ⌋ ==\n\n{message}",
+        "sendnoti.message": "╮════ـــــــــ═════ـــ════╭\n{message}\n╯═════ــــــ═════ــــــ═══╰",
         "sendnoti.success": "Sent notification to {count} groups",
         "sendnoti.fail": "Failed to send notification to {count} groups"
     },
     "vi_VN": {
-        "sendnoti.message": "== ⌈ THÔNG BÁO ⌋ ==\n\n{message}",
+        "sendnoti.message": "╮════ـــــــــ═════ـــ════╭\n{message}\n╯═════ــــــ═ـ═══ــــــ═══╰",
         "sendnoti.success": "Đã gửi thông báo đến {count} nhóm",
         "sendnoti.fail": "Không thể gửi thông báo đến {count} nhóm"
     },
     "ar_SY": {
-        "sendnoti.message": "== ⌈ إـشــعـــار ⌋ ==\n\n{message}",
+        "sendnoti.message": "╮════ـــــــــ═════ـــ════╭\n{message}\n╯═════ــــــ═════ــــــ═══╰",
         "sendnoti.success": "إرسال اشعار إلى {count} المجموعات",
         "sendnoti.fail": "فشل في إرسال إشعار إلى {count} المجموعات"
     }
@@ -34,10 +34,30 @@ const exts = {
     "file": ""
 }
 
+// دالة لتقسيم النص الطويل على أسطر حسب طول محدد
+function wrapText(text, maxLength = 50) {
+    const lines = [];
+    const words = text.split(" ");
+    let line = "";
+    for (let word of words) {
+        if ((line + " " + word).trim().length > maxLength) {
+            lines.push(line.trim());
+            line = word;
+        } else {
+            line += " " + word;
+        }
+    }
+    if (line) lines.push(line.trim());
+    return lines.join("\n");
+}
+
 async function onCall({ message, args, getLang, prefix }) {
     const { type, messageReply, senderID, threadID } = message;
     const attachments = type == "message_reply" ? messageReply.attachments : message.attachments;
     let msg = (type == "message_reply" && messageReply.body ? messageReply.body : message.body.slice(prefix.length + config.name.length + 1)) || "";
+
+    // تقسيم النص الطويل وتركه جوه القايمة
+    msg = wrapText(msg);
 
     let filePath = [];
     if (attachments.length > 0) {
@@ -91,4 +111,4 @@ export default {
     config,
     langData,
     onCall
-}
+    }
