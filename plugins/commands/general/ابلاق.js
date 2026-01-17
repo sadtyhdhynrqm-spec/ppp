@@ -1,10 +1,10 @@
 const config = {
-    name: "report",
+    name: "ابلاق",
     description: "report to mods",
     usage: "[text/attachment/reply]",
     cooldown: 3,
     permissions: [0, 1, 2],
-    credits: "XaviaTeam",
+    credits: "ᏕᎥᏁᎨᎧ",
 };
 
 const langData = {
