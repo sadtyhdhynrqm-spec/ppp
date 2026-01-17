@@ -1,11 +1,11 @@
 const config = {
-    name: "settings",
+    name: "اعدادات",
     aliases: ["setting"],
     description: "Settings for better group management",
     usage: "",
     cooldown: 3,
     permissions: [1],
-    credits: "XaviaTeam",
+    credits: "ᏕᎥᏁᎨᎧ",
 };
 
 const langData = {
