@@ -51,72 +51,83 @@ const langData = {
 };
 
 function getCommandName(commandName) {
-    if (global.plugins.commandsAliases.has(commandName)) return commandName;
-    for (let [key, value] of global.plugins.commandsAliases) {
+    const aliasesMap = global.plugins?.commandsAliases;
+    if (!aliasesMap) return null;
+
+    if (aliasesMap.has(commandName)) return commandName;
+    for (const [key, value] of aliasesMap) {
         if (value.includes(commandName)) return key;
     }
     return null;
 }
 
-async function onCall({ message, args, getLang, userPermissions, prefix, data }) {
-    const { commandsConfig } = global.plugins;
-    const commandName = args[0]?.toLowerCase();
-
+async function Gif() {
     const gifs = [
         "https://i.imgur.com/3tBIaSF.gif",
         "https://i.imgur.com/vWl3Tb5.gif",
         "https://i.imgur.com/DYfouuR.gif"
     ];
     const gif = gifs[Math.floor(Math.random() * gifs.length)];
-      const x = await axios.get(gif, { responseType: "stream" });
+    const res = await axios.get(gif, { responseType: "stream" });
+    return res.data;
+}
+
+async function onCall({ message, args, getLang, userPermissions, prefix, data }) {
+    const { commandsConfig } = global.plugins;
+    const commandName = args[0]?.toLowerCase();
+
+    const language =
+        data?.thread?.data?.language ||
+        global.config?.LANGUAGE ||
+        "en_US";
+
     if (!commandName) {
         let commands = {};
-        const language =
-            data?.thread?.data?.language ||
-            global.config?.LANGUAGE ||
-            "en_US";
 
         for (const [key, value] of commandsConfig.entries()) {
             if (value.isHidden) continue;
+
             if (
                 value.isAbsolute &&
                 !global.config?.ABSOLUTES?.includes(message.senderID)
             ) continue;
 
-            if (!value.permissions) value.permissions = [0, 1, 2];
+            value.permissions ??= [0, 1, 2];
             if (!value.permissions.some(p => userPermissions.includes(p))) continue;
 
-            if (!commands[value.category]) commands[value.category] = [];
+            commands[value.category] ??= [];
             commands[value.category].push(
                 value._name?.[language] || key
             );
         }
 
         const list = Object.keys(commands)
-            .map(
-                category =>
-                    `⌈ ${category.toUpperCase()} ⌋\n${commands[category].join(" ▣ ")}`
+            .map(cat =>
+                `⌈ ${cat.toUpperCase()} ⌋\n${commands[cat].join(" ▣ ")}`
             )
             .join("\n\n");
 
         return message.reply({
-            attachment: x.data,
-            body: `${getLang("help.list", {
+            attachment: await Gif(),
+            body: getLang("help.list", {
                 total: Object.values(commands)
                     .map(e => e.length)
                     .reduce((a, b) => a + b, 0),
                 list,
                 syntax: prefix
-            })}`}
-        );
+            })
+        });
     }
 
     const realName = getCommandName(commandName);
     const command = commandsConfig.get(realName);
+
     if (!command)
         return message.reply(
             getLang("help.commandNotExists", { command: commandName })
         );
+
+    command.permissions ??= [0, 1, 2];
 
     const isUserValid = command.isAbsolute
         ? global.config?.ABSOLUTES?.includes(message.senderID)
@@ -132,8 +143,8 @@ async function onCall({ message, args, getLang, userPermissions, prefix, data })
         );
 
     return message.reply({
-        attachment: x.data,
-        body: `${getLang("help.commandDetails", {
+        attachment: await Gif(),
+        body: getLang("help.commandDetails", {
             name: command.name,
             aliases: command.aliases.join(" ▣ "),
             version: command.version || "1.0.0",
@@ -145,8 +156,8 @@ async function onCall({ message, args, getLang, userPermissions, prefix, data })
             category: command.category,
             cooldown: command.cooldown || 3,
             credits: command.credits || ""
-        }).replace(/^ +/gm, "")}`}
-    );
+        }).replace(/^ +/gm, "")
+    });
 }
 
 export default {
