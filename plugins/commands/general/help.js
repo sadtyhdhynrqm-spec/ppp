@@ -1,167 +1,54 @@
-import axios from "axios";
-
 const config = {
     name: "help",
     _name: {
-        ar_SY: "اوامر"
+        "ar_SY": "اوامر"
     },
     aliases: ["cmds", "commands"],
     version: "1.0.3",
     description: "Show all commands or command details",
     usage: "[command] (optional)",
     credits: "ᏕᎥᏁᎨᎧ"
-};
+}
 
 const langData = {
-    en_US: {
-        "help.list": "{list}\n\n⇒ Total: {total} commands\n⇒ Use {syntax} [command] to get more information about a command.",
-        "help.commandNotExists": "Command {command} does not exists.",
-        "help.commandDetails": `
-⇒ Name: {name}
-⇒ Aliases: {aliases}
-⇒ Version: {version}
-⇒ Description: {description}
-⇒ Usage: {usage}
-⇒ Permissions: {permissions}
-⇒ Category: {category}
-⇒ Cooldown: {cooldown}
-⇒ Credits: {credits}
-        `,
-        "0": "Member",
-        "1": "Group Admin",
-        "2": "Bot Admin"
+    "en_US": {
+        "help.commandNotExists": "Command {command} does not exist."
     },
-    ar_SY: {
-        "help.list": "{list}\n\n⇒ المجموع: {total} الاوامر\n⇒ يستخدم {syntax} [امر] لمزيد من المعلومات حول الأمر.",
-        "help.commandNotExists": "امر {command} غير موجود.",
-        "help.commandDetails": `
-⇒ اسم: {name}
-⇒ اسم مستعار: {aliases}
-⇒ وصف: {description}
-⇒ استعمال: {usage}
-⇒ الصلاحيات: {permissions}
-⇒ فئة: {category}
-⇒ وقت الانتظار: {cooldown}
-⇒ الاعتمادات: {credits}
-        `,
-        "0": "عضو",
-        "1": "إدارة المجموعة",
-        "2": "ادارة البوت"
+    "ar_SY": {
+        "help.commandNotExists": "امر {command} غير موجود."
     }
-};
+}
 
+// تحويل اسم الأمر في حالة كان alias
 function getCommandName(commandName) {
-    const aliasesMap = global.plugins?.commandsAliases;
-    if (!aliasesMap) return null;
-
-    if (aliasesMap.has(commandName)) return commandName;
-    for (const [key, value] of aliasesMap) {
+    if (global.plugins.commandsAliases.has(commandName)) return commandName;
+    for (let [key, value] of global.plugins.commandsAliases) {
         if (value.includes(commandName)) return key;
     }
     return null;
 }
 
-async function Gif() {
-    const gifs = [
-        "https://i.imgur.com/3tBIaSF.gif",
-        "https://i.imgur.com/vWl3Tb5.gif",
-        "https://i.imgur.com/DYfouuR.gif"
-    ];
-    const gif = gifs[Math.floor(Math.random() * gifs.length)];
-    const res = await axios.get(gif, { responseType: "stream" });
-    return res.data;
-}
-
-async function onCall({ message, args, getLang, userPermissions, prefix, data }) {
+async function onCall({ message, args, userPermissions }) {
     const { commandsConfig } = global.plugins;
     const commandName = args[0]?.toLowerCase();
 
-    const language =
-        data?.thread?.data?.language ||
-        global.config?.LANGUAGE ||
-        "en_US";
+    // هنا الرابط للصورة الجاهزة مسبقًا التي تحتوي على كل الأوامر
+    const helpImage = "https://i.ibb.co/PJK2n1N/Messenger-creation-2-DBBF1-E2-3696-464-A-BA72-D62-B034-DA8-F1.jpg";
 
     if (!commandName) {
-        let commands = {};
+        // إرسال الصورة فقط للقائمة الكاملة
+        message.reply({ attachment: [helpImage] });
+    } else {
+        const command = commandsConfig.get(getCommandName(commandName, commandsConfig));
+        if (!command) return message.reply(langData["ar_SY"]["help.commandNotExists"].replace("{command}", commandName));
 
-        for (const [key, value] of commandsConfig.entries()) {
-            if (value.isHidden) continue;
-
-            if (
-                value.isAbsolute &&
-                !global.config?.ABSOLUTES?.includes(message.senderID)
-            ) continue;
-
-            value.permissions ??= [0, 1, 2];
-            if (!value.permissions.some(p => userPermissions.includes(p))) continue;
-
-            commands[value.category] ??= [];
-            commands[value.category].push(
-                value._name?.[language] || key
-            );
-        }
-
-        const list = Object.keys(commands)
-            .map(cat =>
-                `⌈ ${cat.toUpperCase()} ⌋\n${commands[cat].join(" ▣ ")}`
-            )
-            .join("\n\n");
-
-        return message.reply({
-            attachment: await Gif(),
-            body: getLang("help.list", {
-                total: Object.values(commands)
-                    .map(e => e.length)
-                    .reduce((a, b) => a + b, 0),
-                list,
-                syntax: prefix
-            })
-        });
+        // إرسال صورة واحدة تحتوي تفاصيل الأمر (يمكنك تصميم صورة لكل أمر لو حبيت)
+        message.reply({ attachment: [helpImage] });
     }
-
-    const realName = getCommandName(commandName);
-    const command = commandsConfig.get(realName);
-
-    if (!command)
-        return message.reply(
-            getLang("help.commandNotExists", { command: commandName })
-        );
-
-    command.permissions ??= [0, 1, 2];
-
-    const isUserValid = command.isAbsolute
-        ? global.config?.ABSOLUTES?.includes(message.senderID)
-        : true;
-
-    const isPermissionValid = command.permissions.some(p =>
-        userPermissions.includes(p)
-    );
-
-    if (command.isHidden || !isUserValid || !isPermissionValid)
-        return message.reply(
-            getLang("help.commandNotExists", { command: commandName })
-        );
-
-    return message.reply({
-        attachment: await Gif(),
-        body: getLang("help.commandDetails", {
-            name: command.name,
-            aliases: command.aliases.join(" ▣ "),
-            version: command.version || "1.0.0",
-            description: command.description || "",
-            usage: `${prefix}${commandName} ${command.usage || ""}`,
-            permissions: command.permissions
-                .map(p => getLang(String(p)))
-                .join(" ▣ "),
-            category: command.category,
-            cooldown: command.cooldown || 3,
-            credits: command.credits || ""
-        }).replace(/^ +/gm, "")
-    });
 }
 
 export default {
     config,
     langData,
     onCall
-};
+        }
