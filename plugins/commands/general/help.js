@@ -61,8 +61,13 @@ async function onCall({ message, args, getLang, userPermissions, prefix }) {
     const { commandsConfig } = global.plugins;
     const commandName = args[0]?.toLowerCase();
 
-    // رابط الصورة الثابتة
-    const imageUrl = "https://i.ibb.co/PJK2n1N/Messenger-creation-2-DBBF1-E2-3696-464-A-BA72-D62-B034-DA8-F1.jpg";
+    // روابط الصور المتحركة
+    const gifs = [
+        "https://i.imgur.com/3tBIaSF.gif",
+        "https://i.imgur.com/vWl3Tb5.gif",
+        "https://i.imgur.com/DYfouuR.gif"
+    ];
+    const gif = gifs[Math.floor(Math.random() * gifs.length)]; // اختيار صورة عشوائية
 
     if (!commandName) {
         let commands = {};
@@ -80,12 +85,12 @@ async function onCall({ message, args, getLang, userPermissions, prefix }) {
             .map(category => `⌈ ${category.toUpperCase()} ⌋\n${commands[category].join(" ▣ ")}`)
             .join("\n\n");
 
-        // إرسال الصورة مع قائمة الأوامر
-        message.reply({ body: getLang("help.list", {
+        // إرسال النص كله مع رابط GIF في رسالة واحدة
+        message.reply(`${gif}\n\n${getLang("help.list", {
             total: Object.values(commands).map(e => e.length).reduce((a, b) => a + b, 0),
             list,
             syntax: prefix
-        }), attachment: [imageUrl] });
+        })}`);
     } else {
         const command = commandsConfig.get(getCommandName(commandName, commandsConfig));
         if (!command) return message.reply(getLang("help.commandNotExists", { command: commandName }));
@@ -96,7 +101,7 @@ async function onCall({ message, args, getLang, userPermissions, prefix }) {
         if (isHidden || !isUserValid || !isPermissionValid)
             return message.reply(getLang("help.commandNotExists", { command: commandName }));
 
-        message.reply({ body: getLang("help.commandDetails", {
+        message.reply(`${gif}\n\n${getLang("help.commandDetails", {
             name: command.name,
             aliases: command.aliases.join(" ▣ "),
             version: command.version || "1.0.0",
@@ -106,7 +111,7 @@ async function onCall({ message, args, getLang, userPermissions, prefix }) {
             category: command.category,
             cooldown: command.cooldown || 3,
             credits: command.credits || ""
-        }).replace(/^ +/gm, ''), attachment: [imageUrl] });
+        }).replace(/^ +/gm, '')}`);
     }
 }
 
@@ -114,4 +119,4 @@ export default {
     config,
     langData,
     onCall
-    }
+                }
