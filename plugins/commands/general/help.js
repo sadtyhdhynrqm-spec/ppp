@@ -16,7 +16,7 @@ const config = {
 
 const langData = {
     "en_US": {
-        "help.list": "{list}\n\n⇒ Total: {total} commands\n⇒ Use {syntax} [command] to get more information about a command.",
+        "help.list": "{list}\n\n⇒ Total: {total} commands\n⇒ Use {syntax}[command] to get more information about a command.",
         "help.commandNotExists": "Command {command} does not exists.",
         "help.commandDetails": `
 ⇒ Name: {name}
@@ -34,67 +34,79 @@ const langData = {
         "2": "Bot Admin"
     },
     "ar_SY": {
-        "help.list": "{list}\n\n⇒ المجموع: {total} الاوامر\n⇒ يستخدم {syntax} [امر] لمزيد من المعلومات حول الأمر.",
-        "help.commandNotExists": "امر {command} غير موجود.",
+        "help.list": "{list}\n\n⇒ المجموع: {total} الاوامر\n⇒ استخدم {syntax}[امر] لمزيد من المعلومات.",
+        "help.commandNotExists": "الامر {command} غير موجود.",
         "help.commandDetails": `
-⇒ اسم: {name}
-⇒ اسم مستعار: {aliases}
-⇒ الإصدار: {version}
+⇒ الاسم: {name}
+⇒ الاسماء: {aliases}
+⇒ الاصدار: {version}
 ⇒ الوصف: {description}
 ⇒ الاستعمال: {usage}
 ⇒ الصلاحيات: {permissions}
 ⇒ الفئة: {category}
 ⇒ وقت الانتظار: {cooldown}
-⇒ الاعتمادات: {credits}
+⇒ الحقوق: {credits}
         `,
         "0": "عضو",
-        "1": "إدارة المجموعة",
-        "2": "ادارة البوت"
+        "1": "ادمن مجموعة",
+        "2": "ادمن بوت"
     }
 };
 
-// تحميل الصورة مرة واحدة فقط
+// تحميل الصورة (مرة واحدة)
 async function downloadImage(url, filePath) {
     if (fs.existsSync(filePath)) return;
     const res = await axios.get(url, { responseType: "stream" });
-    const writer = fs.createWriteStream(filePath);
-    res.data.pipe(writer);
-    return new Promise((resolve, reject) => {
-        writer.on("finish", resolve);
-        writer.on("error", reject);
+    await new Promise((resolve, reject) => {
+        const stream = fs.createWriteStream(filePath);
+        res.data.pipe(stream);
+        stream.on("finish", resolve);
+        stream.on("error", reject);
     });
 }
 
-// تحويل alias إلى اسم الأمر الحقيقي
-function getCommandName(commandName) {
-    if (global.plugins.commandsAliases.has(commandName)) return commandName;
-    for (let [key, value] of global.plugins.commandsAliases) {
-        if (value.includes(commandName)) return key;
+// تحويل alias للاسم الحقيقي
+function getCommandName(name) {
+    const aliases = global.plugins?.commandsAliases;
+    if (!aliases) return name;
+
+    if (aliases.has(name)) return name;
+    for (const [cmd, list] of aliases.entries()) {
+        if (Array.isArray(list) && list.includes(name)) return cmd;
     }
     return null;
 }
 
 async function onCall({ message, args, getLang, userPermissions, prefix }) {
-    const { commandsConfig } = global.plugins;
+    const commandsConfig = global.plugins?.commandsConfig;
+    if (!commandsConfig) return;
+
     const commandName = args[0]?.toLowerCase();
 
     const imageUrl = "https://i.ibb.co/xt75p0yk/1768714709999.jpg";
-    const imagePath = path.join(__dirname, "help.jpg");
+    const cacheDir = path.join(process.cwd(), "cache");
+    if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
+
+    const imagePath = path.join(cacheDir, "help.jpg");
     await downloadImage(imageUrl, imagePath);
 
     // ===============================
-    // عرض قائمة الأوامر
+    // عرض قائمة الاوامر
     // ===============================
     if (!commandName) {
+        const language =
+            message.thread?.data?.language ||
+            global.config?.LANGUAGE ||
+            "en_US";
+
         let commands = {};
-        const language = data?.thread?.data?.language || global.config.LANGUAGE || "en_US";
 
         for (const [key, value] of commandsConfig.entries()) {
             if (value.isHidden) continue;
-            if (value.isAbsolute && !global.config?.ABSOLUTES.includes(message.senderID)) continue;
+            if (value.isAbsolute && !global.config?.ABSOLUTES?.includes(message.senderID)) continue;
 
-            if (!value.permissions) value.permissions = [0, 1, 2];
-            if (!value.permissions.some(p => userPermissions.includes(p))) continue;
+            const perms = value.permissions || [0, 1, 2];
+            if (!perms.some(p => userPermissions.includes(p))) continue;
 
             if (!commands[value.category]) commands[value.category] = [];
             commands[value.category].push(
@@ -117,29 +129,36 @@ async function onCall({ message, args, getLang, userPermissions, prefix }) {
     }
 
     // ===============================
-    // عرض تفاصيل أمر معين
+    // عرض تفاصيل امر
     // ===============================
-    const command = commandsConfig.get(getCommandName(commandName));
-    if (!command)
-        return message.reply(getLang("help.commandNotExists", { command: commandName }));
+    const realName = getCommandName(commandName);
+    const command = commandsConfig.get(realName);
 
+    if (!command)
+        return message.reply(
+            getLang("help.commandNotExists", { command: commandName })
+        );
+
+    const perms = command.permissions || [0, 1, 2];
     if (
         command.isHidden ||
-        (command.isAbsolute && !global.config?.ABSOLUTES.includes(message.senderID)) ||
-        !command.permissions.some(p => userPermissions.includes(p))
+        (command.isAbsolute && !global.config?.ABSOLUTES?.includes(message.senderID)) ||
+        !perms.some(p => userPermissions.includes(p))
     ) {
-        return message.reply(getLang("help.commandNotExists", { command: commandName }));
+        return message.reply(
+            getLang("help.commandNotExists", { command: commandName })
+        );
     }
 
     return message.reply({
         body: getLang("help.commandDetails", {
             name: command.name,
-            aliases: command.aliases.join(" ▣ "),
+            aliases: (command.aliases || []).join(" ▣ "),
             version: command.version || "1.0.0",
             description: command.description || "",
             usage: `${prefix}${commandName} ${command.usage || ""}`,
-            permissions: command.permissions.map(p => getLang(String(p))).join(" ▣ "),
-            category: command.category,
+            permissions: perms.map(p => getLang(String(p))).join(" ▣ "),
+            category: command.category || "General",
             cooldown: command.cooldown || 3,
             credits: command.credits || ""
         }).replace(/^ +/gm, ""),
