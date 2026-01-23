@@ -97,12 +97,15 @@ async function checkUpdate() {
 
 // Child handler
 const _1_MINUTE = 60000;
+const _1_HOUR = 60 * 60 * 1000;
 let restartCount = 0;
+let childProcess = null;
 
-async function main() {
+async function startChild() {
     await checkUpdate();
     await loadPlugins();
-    const child = spawn(
+
+    childProcess = spawn(
         "node",
         [
             "--trace-warnings",
@@ -117,14 +120,14 @@ async function main() {
         }
     );
 
-    child.on("close", async (code) => {
+    childProcess.on("close", async (code) => {
         handleRestartCount();
         if (code !== 0 && restartCount < 5) {
             console.log();
             logger.error(`An error occurred with exit code ${code}`);
             logger.warn("Restarting...");
             await new Promise((resolve) => setTimeout(resolve, 2000));
-            main();
+            startChild();
         } else {
             console.log();
             logger.error("XaviaBot has stopped, press Ctrl + C to exit.");
@@ -139,4 +142,19 @@ function handleRestartCount() {
     }, _1_MINUTE);
 }
 
-main();
+async function restartHourly() {
+    // Start immediately
+    await startChild();
+
+    // Restart every hour
+    setInterval(async () => {
+        if (childProcess) {
+            logger.warn("Restarting child process (hourly restart)...");
+            childProcess.kill("SIGINT"); // graceful stop
+        }
+        await startChild();
+    }, _1_HOUR);
+}
+
+// Run the hourly restart handler
+restartHourly();
