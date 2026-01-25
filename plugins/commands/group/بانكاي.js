@@ -1,103 +1,131 @@
+import axios from "axios";
+import fs from "fs";
+import path from "path";
+
 const config = {
     name: "بانكاي",
     description: "kick user",
     usage: "[reply/@mention]",
     cooldown: 5,
     permissions: [1],
-    credits: "ᏕᎥᏁᎨᎧ",
+    credits: "XaviaTeam",
 };
 
 const langData = {
-    en_US: {
-        missingTarget: "Please tag or reply message of user to kick",
-        botNotAdmin: "Bot need to be admin to kick user",
-        botTarget: "Why do you want to kick bot out of group :<?",
-        senderTarget: "Why do you want to kick yourself out of group :v?",
-        botAndSenderTarget:
-            "Why do you want to kick bot and yourself out of group :v?",
-        kickResult: "Kicked {success} user(s)",
-        kickFail: "Failed to kick {fail} user(s)",
-        error: "An error occurred, please try again later",
-    },
-    vi_VN: {
-        missingTarget: "Vui lòng tag hoặc reply tin nhắn của người cần kick",
-        botNotAdmin:
-            "Bot cần được cấp quyền quản trị viên để có thể kick thành viên",
-        botTarget: "Sao lại muốn kick bot ra khỏi nhóm vậy :<?",
-        senderTarget: "Sao bạn lại muốn tự kick mình ra khỏi nhóm vậy :v?",
-        botAndSenderTarget:
-            "Sao bạn lại muốn kick cả bot và mình ra khỏi nhóm vậy :v?",
-        kickResult: "Đã kick thành công {success} người",
-        kickFail: "Kick thất bại {fail} người",
-        error: "Đã có lỗi xảy ra, vui lòng thử lại sau",
-    },
     ar_SY: {
-        missingTarget: "تاق منشى 🗿🔨",
-        botNotAdmin: "ارفع ادمن اولا  ꪔ̤̱",
-        botTarget: "لماذا تريد طرد البوت من المجموعة :<?",
-        senderTarget: "لماذا تريد طرد نفسك من المجموعة :v?",
-        botAndSenderTarget: " قاعد في بيتكم 🗿🔨",
+        missingTarget: "يرجى منشن العضو أو الرد على رسالته للطرد",
+        botNotAdmin: "يجب أن يكون البوت مشرفًا لطرد المستخدم",
+        botTarget: "لماذا تريد طرد البوت من المجموعة؟",
+        senderTarget: "لماذا تريد طرد نفسك من المجموعة؟",
+        botAndSenderTarget: "لماذا تريد طرد البوت ونفسك من المجموعة؟",
         kickResult: "تم طرد {success} مستخدم",
-        kickFail: "فشل ركل {fail} مستخدم",
-        error: "لقد حدث خطأ، رجاء أعد المحاولة لاحقا",
+        kickFail: "فشل طرد {fail} مستخدم",
+        error: "حدث خطأ، حاول مرة أخرى لاحقًا",
     },
 };
 
-function kick(userID, threadID) {
-    return new Promise((resolve, reject) => {
-        global.api.removeUserFromGroup(userID, threadID, (err) => {
-            if (err) return reject(err);
-            resolve();
+// رابط الصورة
+const KICK_IMAGE =
+    "https://i.ibb.co/PJK2n1N/Messenger-creation-2-DBBF1-E2-3696-464-A-BA72-D62-B034-DA8-F1.jpg";
+
+// ===== إرسال الصورة =====
+async function sendKickImage(threadID) {
+    try {
+        const imgPath = path.join(process.cwd(), "kick_tmp.jpg");
+
+        const res = await axios.get(KICK_IMAGE, {
+            responseType: "arraybuffer",
         });
-    });
+
+        fs.writeFileSync(imgPath, Buffer.from(res.data));
+
+        await new Promise((resolve) => {
+            global.api.sendMessage(
+                { attachment: fs.createReadStream(imgPath) },
+                threadID,
+                () => resolve()
+            );
+        });
+
+        fs.unlinkSync(imgPath);
+    } catch (e) {
+        console.error("Send image error:", e);
+    }
 }
 
 async function onCall({ message, getLang, data }) {
-    if (!message.isGroup) return;
-    const { threadID, mentions, senderID, messageReply, type, reply } = message;
     try {
-        if (Object.keys(mentions).length == 0 && type != "message_reply")
+        if (!message || !message.isGroup) return;
+
+        const {
+            threadID,
+            mentions = {},
+            senderID,
+            messageReply,
+            type,
+            reply,
+        } = message;
+
+        // ===== التحقق من الهدف =====
+        if (Object.keys(mentions).length === 0 && type !== "message_reply")
             return reply(getLang("missingTarget"));
 
-        const threadInfo = data.thread.info;
+        const threadInfo = data?.thread?.info;
+        if (!threadInfo || !Array.isArray(threadInfo.adminIDs))
+            return reply(getLang("error"));
+
         const { adminIDs } = threadInfo;
+
         const targetIDs =
             Object.keys(mentions).length > 0
                 ? Object.keys(mentions)
-                : [messageReply.senderID];
+                : messageReply?.senderID
+                ? [messageReply.senderID]
+                : [];
 
-        if (!adminIDs.some((e) => e == global.botID))
+        if (targetIDs.length === 0)
+            return reply(getLang("missingTarget"));
+
+        // ===== تحقق من صلاحيات البوت =====
+        if (!adminIDs.includes(global.botID))
             return reply(getLang("botNotAdmin"));
-        if (targetIDs.length == 1 && targetIDs[0] == global.botID)
-            return reply(getLang("botTarget"));
-        if (targetIDs.length == 1 && targetIDs[0] == senderID)
-            return reply(getLang("senderTarget"));
-        if (
-            targetIDs.length == 2 &&
-            targetIDs.some((e) => e == global.botID) &&
-            targetIDs.some((e) => e == senderID)
-        )
-            return reply(getLang("botAndSenderTarget"));
 
-        let success = 0,
-            fail = 0;
-        for (const targetID of targetIDs) {
-            if (targetID == global.botID || targetID == senderID) continue;
-            try {
-                await kick(targetID, threadID);
-                await global.utils.sleep(500);
-                success++;
-            } catch (e) {
-                console.error(e);
-                fail++;
-            }
+        // ===== حالات المنع =====
+        if (targetIDs.includes(global.botID))
+            return reply(getLang("botTarget"));
+
+        if (targetIDs.includes(senderID))
+            return reply(getLang("senderTarget"));
+
+        let success = 0;
+        let fail = 0;
+
+        // 🔥 أرسل الصورة أولاً
+        await sendKickImage(threadID);
+
+        // ⛔ الطرد بالطريقة الأصلية المتوافقة
+        for (const uid of targetIDs) {
+            global.api.removeUserFromGroup(uid, threadID, (err) => {
+                if (err) {
+                    console.error("Kick error:", err);
+                    fail++;
+                } else {
+                    success++;
+                }
+            });
         }
 
-        await reply(getLang("kickResult", { success }));
-        if (fail > 0) await reply(getLang("kickFail", { fail }));
+        // ⏳ انتظر شوية عشان الفيس ينفّذ
+        setTimeout(() => {
+            if (success > 0)
+                reply(getLang("kickResult", { success }));
+            if (fail > 0)
+                reply(getLang("kickFail", { fail }));
+        }, 1500);
     } catch (e) {
-        console.error(e);
-        reply(getLang("error"));
+        console.error("Command error:", e);
+        if (message?.reply)
+            message.reply(getLang("error"));
     }
 }
 
