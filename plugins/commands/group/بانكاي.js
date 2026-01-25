@@ -35,12 +35,12 @@ const langData = {
         error: "Đã có lỗi xảy ra, vui lòng thử lại sau",
     },
     ar_SY: {
-        missingTarget: "اعمل تاق لعب 🐸💔",
-        botNotAdmin:" وزع انا ما ادمن ",
-        botTarget: "يا عب ما بتقدر تطردني 🐸",
+        missingTarget: "تاق منشى 🗿🔨",
+        botNotAdmin: "ارفع ادمن اولا  ꪔ̤̱",
+        botTarget: "لماذا تريد طرد البوت من المجموعة :<?",
         senderTarget: "لماذا تريد طرد نفسك من المجموعة :v?",
         botAndSenderTarget: " قاعد في بيتكم 🗿🔨",
-        kickResult: "كان رقاصه 🐸 {success} مستخدم",
+        kickResult: "تم طرد {success} مستخدم",
         kickFail: "فشل ركل {fail} مستخدم",
         error: "لقد حدث خطأ، رجاء أعد المحاولة لاحقا",
     },
@@ -55,11 +55,13 @@ function kick(userID, threadID) {
     });
 }
 
-function sendImage(threadID) {
+// ✅ التعديل الوحيد هنا
+async function sendImage(threadID) {
+    const stream = await global.utils.getStreamFromURL(IMAGE_URL);
     return new Promise((resolve, reject) => {
         global.api.sendMessage(
             {
-                attachment: global.utils.getStreamFromURL(IMAGE_URL),
+                attachment: stream,
             },
             threadID,
             (err) => {
