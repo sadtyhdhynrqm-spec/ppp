@@ -18,7 +18,7 @@ const langData = {
         botTarget: "لريد تريد طرد البوت من المجموعة؟",
         senderTarg"ارفع ادمن وتعال ارقص لي تاني ",
         botAndSenderTarget: "كلو ما تحاول تطردني تزكر انا ما قاعد في يرجى
-        kickResult: "كان رقاصه {success} رقم ☝ ",
+        kickResult: "كان رقاصه {success} رقم ",
         kickFail: "فشل طرد {fail} مستخدم",
         error: "حدث خطأ، حاول مرة أخرى لاحقًا",
     },
