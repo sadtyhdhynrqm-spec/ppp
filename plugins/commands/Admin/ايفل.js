@@ -1,64 +1,88 @@
-const axios = require("axios");
-const fs = require("fs-extra");
+import axios from "axios";
+import fs from "fs-extra";
 
 const config = {
     name: "ايفل",
-    description: "خاص بزهير",
+    aliases: ["ev"],
+    description: "تنفيذ كود JavaScript",
+    usage: "eval <code>",
     cooldown: 0,
     permissions: [2],
-    credits: "Gry KJ"
+    credits: "Gry KJ",
 };
 
-const langData = {};
+const langData = {
+    ar_SY: {
+        missingCode: "❌ | أدخل كود JavaScript للتنفيذ",
+        evalError: "❌ | خطأ أثناء التنفيذ:\n{error}",
+        unknownError: "❌ | حدث خطأ غير متوقع",
+    },
+};
 
-async function onCall({ message, api, args }) {
+// ===== أدوات مساعدة =====
+function mapToObj(map) {
+    const obj = {};
+    map.forEach((v, k) => (obj[k] = v));
+    return obj;
+}
+
+function formatOutput(msg) {
+    if (
+        typeof msg === "number" ||
+        typeof msg === "boolean" ||
+        typeof msg === "function"
+    ) {
+        return msg.toString();
+    }
+
+    if (msg instanceof Map) {
+        return `Map(${msg.size}) ` + JSON.stringify(mapToObj(msg), null, 2);
+    }
+
+    if (typeof msg === "object") {
+        return JSON.stringify(msg, null, 2);
+    }
+
+    if (typeof msg === "undefined") {
+        return "undefined";
+    }
+
+    return msg;
+}
+
+// ===== الأمر =====
+async function onCall({ message, args, getLang }) {
     try {
+        if (!args[0]) return message.reply(getLang("missingCode"));
 
+        // دالة إخراج
         function output(msg) {
-            if (typeof msg == "number" || typeof msg == "boolean" || typeof msg == "function")
-                msg = msg.toString();
-            else if (msg instanceof Map) {
-                let text = `Map(${msg.size}) `;
-                text += JSON.stringify(mapToObj(msg), null, 2);
-                msg = text;
-            }
-            else if (typeof msg == "object")
-                msg = JSON.stringify(msg, null, 2);
-            else if (typeof msg == "undefined")
-                msg = "undefined";
-
-            api.sendMessage(msg, message.threadID, message.messageID);
+            message.reply(formatOutput(msg));
         }
 
-        function out(msg) {
-            output(msg);
-        }
+        const code = args.join(" ");
 
-        function mapToObj(map) {
-            const obj = {};
-            map.forEach(function (v, k) {
-                obj[k] = v;
-            });
-            return obj;
-        }
-
-        const cmd = `
+        const execCode = `
         (async () => {
             try {
-                ${args.join(" ")}
+                ${code}
+            } catch (err) {
+                message.reply(
+                    "${getLang("evalError", { error: "${err.message}" })}"
+                );
             }
-            catch(err) {
-                console.log("eval command", err);
-                api.sendMessage(err.message, "${message.threadID}", "${message.messageID}");
-            }
-        })()
+        })();
         `;
 
-        eval(cmd);
-
+        eval(execCode);
     } catch (err) {
-        console.log(err);
+        console.error("Eval command error:", err);
+        message.reply(getLang("unknownError"));
     }
 }
 
-export default { config, langData, onCall };
+export default {
+    config,
+    langData,
+    onCall,
+};
