@@ -12,7 +12,7 @@ const config = {
 
 const langData = {
     ar_SY: {
-        usage: "❌ | الاستخدام: كمند [تحميل/لود] [اسم_الأمر]",
+        usage: "❌ | الاستخدام: تحميل [تحميل/اك] [اسم_الأمر]",
         missingName: "❌ | اكتب اسم الأمر",
         loadSuccess: '✅ | تم تحميل "{name}.js" بنجاح',
         loadError: "❌ | حدث خطأ في تحميل {name}\n\n{error}",
