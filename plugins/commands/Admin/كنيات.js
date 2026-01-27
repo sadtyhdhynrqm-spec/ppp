@@ -40,12 +40,15 @@ async function onCall({ message, getLang, data }) {
 
         const { adminIDs, participantIDs } = threadInfo;
 
+        // استخراج IDs الأدمن بشكل صحيح
+        const adminIdList = adminIDs.map((a) => a.id);
+
         // تحقق من صلاحيات البوت
-        if (!adminIDs.includes(global.botID))
+        if (!adminIdList.includes(global.botID))
             return reply(getLang("error"));
 
         // تحقق من صلاحيات المستخدم
-        if (!adminIDs.includes(senderID))
+        if (!adminIdList.includes(senderID))
             return reply(getLang("notAdmin"));
 
         reply(
