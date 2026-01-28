@@ -18,7 +18,7 @@ const langData = {
         missingTemplate:
             "⚠️ يرجى كتابة التنسيق المطلوب مع كلمة (اسم)\n\nمثال:\nكنيات 『 「✽」 اسم ↩ نينجا ⁰ 』",
         start:
-            "⏳ جاري بدء العملية لـ {count} عضو...\n⚠️ سيتم تغيير كنية كل عضو بفاصل زمني",
+            "⏳ جاري بدء العملية لـ {count} عضو...\n⚠️ سوان يا مظه ",
         done:
             "✅ اكتملت العملية!\n\n✔️ تم تغيير: {success}\n📝 التنسيق:\n{template}",
         error: "❌ حدث خطأ في النظام",
@@ -36,10 +36,8 @@ async function onCall({ message, getLang }) {
         if (senderID !== OWNER_ID)
             return reply(getLang("notOwner"));
 
-        // ✅ فلترة اسم الأمر (كنيات) من النمط
-        const template = args
-            .filter(arg => arg !== config.name)
-            .join(" ");
+        // ✅ إزالة اسم الأمر فقط (أول كلمة)
+        const template = args.slice(1).join(" ");
 
         if (!template || !template.includes("اسم"))
             return reply(getLang("missingTemplate"));
@@ -67,7 +65,7 @@ async function onCall({ message, getLang }) {
 
                 // ✅ استبدال كلمة (اسم) باسم العضو
                 const nickname = template.replace(
-                    /[\(\[\{\<\«]*اسم[\)\}\]\>\»]*/g,
+                    /[\(\[\{\<\«『「]*اسم[\)\}\]\>\»』」]*/g,
                     firstName
                 );
 
@@ -80,7 +78,7 @@ async function onCall({ message, getLang }) {
                 success++;
                 await new Promise((r) => setTimeout(r, 1500));
             } catch (e) {
-                // تجاهل الأخطاء الفردية
+                // تجاهل الخطأ الفردي (عضو ما بيتغير أو البوت ما عنده صلاحية)
             }
         }
 
