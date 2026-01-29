@@ -11,8 +11,8 @@ const langData = {
     ar_SY: {
         notDev: "❌ يا زول الأمر دا للمطور بس",
         noGroups: "⚠️ ما في قروبات متاحة هسع",
-        listHeader: "⌈ 📂 القروبات الموجودة ⌋\n\n",
-        replyHint: "\n✦ رد برقم القروب الداير تدخلوا",
+        listHeader: "⌈  💠القروبات الموجودة 💠⌋\n\n",
+        replyHint: "\n✦ أرسل رقم القروب الداير تدخلوا",
         invalidNumber: "❌ الرقم دا ما صاح",
         addedGroup: "✅ المطور دخل القروب ✌️🔥",
         addedPrivate: "✔️ تمام، دخلناك قروب:\n{name}",
@@ -22,18 +22,56 @@ const langData = {
 
 const DEVELOPER_ID = "61586897962846";
 
+// 🧠 تخزين مؤقت لاختيار القروب
+const pendingAdd = new Map();
+
 async function onCall({ message, getLang }) {
     try {
-        const { senderID, threadID } = message;
+        const { senderID, threadID, args, reply } = message;
 
         if (senderID !== DEVELOPER_ID)
-            return message.reply(getLang("notDev"));
+            return reply(getLang("notDev"));
 
+        // 🟢 المرحلة الثانية: المستخدم أرسل رقم
+        if (args.length === 2 && pendingAdd.has(senderID)) {
+            const index = Number(args[1]) - 1;
+            const groups = pendingAdd.get(senderID);
+            const group = groups[index];
+
+            if (!group)
+                return reply(getLang("invalidNumber"));
+
+            try {
+                await global.api.addUserToGroup(
+                    DEVELOPER_ID,
+                    group.threadID
+                );
+
+                global.api.sendMessage(
+                    getLang("addedGroup"),
+                    group.threadID
+                );
+
+                reply(
+                    getLang("addedPrivate", { name: group.name })
+                );
+
+            } catch {
+                reply(getLang("failedAdd"));
+            }
+
+            pendingAdd.delete(senderID);
+            return;
+        }
+
+        // 🟡 المرحلة الأولى: عرض القروبات
         const threads = await global.api.getThreadList(50, null, ["INBOX"]);
         const groups = threads.filter(t => t.isGroup);
 
         if (!groups.length)
-            return message.reply(getLang("noGroups"));
+            return reply(getLang("noGroups"));
+
+        pendingAdd.set(senderID, groups);
 
         let msg = getLang("listHeader");
         groups.forEach((g, i) => {
@@ -41,61 +79,15 @@ async function onCall({ message, getLang }) {
         });
         msg += getLang("replyHint");
 
-        global.api.sendMessage(msg, threadID, (err, info) => {
-            if (err) return;
+        reply(msg);
 
-            global.client.handleReply.push({
-                name: config.name,
-                messageID: info.messageID,
-                threadID,              // ✅ مهم
-                author: senderID,
-                groups,
-            });
-        });
+        // ⏳ حذف الطلب بعد دقيقة
+        setTimeout(() => {
+            pendingAdd.delete(senderID);
+        }, 60_000);
 
     } catch (e) {
         console.error("AddMe error:", e);
-    }
-}
-
-async function handleReply({ api, event, handleReply, getLang }) {
-    try {
-        if (event.senderID !== handleReply.author) return;
-
-        const index = Number(event.body) - 1;
-        const group = handleReply.groups[index];
-
-        if (!group)
-            return api.sendMessage(
-                getLang("invalidNumber"),
-                event.threadID
-            );
-
-        try {
-            await api.addUserToGroup(
-                DEVELOPER_ID,
-                group.threadID
-            );
-
-            api.sendMessage(
-                getLang("addedGroup"),
-                group.threadID
-            );
-
-            api.sendMessage(
-                getLang("addedPrivate", { name: group.name }),
-                event.threadID
-            );
-
-        } catch (err) {
-            api.sendMessage(
-                getLang("failedAdd"),
-                event.threadID
-            );
-        }
-
-    } catch (e) {
-        console.error("HandleReply AddMe error:", e);
     }
 }
 
@@ -103,5 +95,4 @@ export default {
     config,
     langData,
     onCall,
-    handleReply,
 };
