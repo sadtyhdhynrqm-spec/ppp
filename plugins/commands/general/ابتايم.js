@@ -1,7 +1,7 @@
 import * as os from "node:os";
 
 const config = {
-    name: "uptime",
+    name: "ابتايم ",
     aliases: ["upt", "status", "sys"],
     credits: "XaviaTeam"
 };
