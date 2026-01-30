@@ -20,7 +20,7 @@ const langData = {
 };
 
 // 🔹 رابط الصورة الثابت
-const IMAGE_URL = "https://i.ibb.co/1GkLbB3r/1768714709999.jpg";
+const IMAGE_URL = "https://i.ibb.co/27RrNnX1/file-000000003da0722fafdd0c28522ad11c.png";
 
 async function onCall({ message, getLang, prefix }) {
     const { threadID } = message;
