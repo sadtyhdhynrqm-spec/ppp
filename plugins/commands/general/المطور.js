@@ -51,7 +51,7 @@ async function onCall({ message, getLang }) {
         const { threadID } = message;
 
         const imageURL =
-            "https://i.ibb.co/wZDHSMvM/received-897009799489398.jpg";
+            "https://i.ibb.co/1GkLbB3r/1768714709999.jpg";
 
         const imgStream = (
             await axios.get(imageURL, { responseType: "stream" })
