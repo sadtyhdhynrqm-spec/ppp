@@ -1,3 +1,4 @@
+# _build.js
 build.start.varLoaded: "تم تحميل متغير البيئة بنجاح."
 build.start.exit: "التنظيف والخروج..."
 build.start.serverStarted: "تمت تهيئة الخادم في البوابة {port} بكلمة سر: {serverAdminPassword}"
@@ -11,41 +12,49 @@ build.startxConsole.platformNotSupported: "لايوجد دعم لتشغيل xCon
 build.refreshState: "تحديث ملفات تعريف الارتباط..."
 build.refreshMqtt: "تحديث MQTT..."
 
+# checkAppstate.js
 modules.checkAppstate.parsingError: "file appstate ليس صالحا / لايمكن فك تشفيرها"
 modules.checkAppstate.noProtection: "appstate الحماية معطلة"
 modules.checkAppstate.error.notSupported: "التشفير غير مدعوم لهذه البيئة"
 modules.checkAppstate.error.noAppstate: "لم يتم العثور على file appstate"
-modules.checkAppstate.foundAppstate: "تم العثور على file appstate"
+modules.checkAppstate.foundAppstate: "تم العثور على  file appstate"
 modules.checkAppstate.error.noKey: "لم يتم العثور على رمز حماية appstate"
 modules.checkAppstate.decrypting: "فك file appstate..."
 modules.checkAppstate.encrypting: "تشفير file appstate..."
 modules.checkAppstate.error.invalid: "file appstate غير صالح, يرجى التحقق مرة أخرى"
 
+# loader.js
 modules.loader.plugins.commands.error.nameExists: "اسم الامر {name} موجود مسبقا!"
 modules.loader.plugins.commands.error.noAliases: "لا توجد أسماء مستعارة متاحة!"
+
 modules.loader.plugins.default.error.onCallNotExists: "وظيفة التنفيذ مفقودة!"
 modules.loader.plugins.default.error.onCallNotFunction: "ليس وظيفة oncall!"
 modules.loader.plugins.default.error.noExport: "البيانات الصالحة مفقودة!"
 modules.loader.plugins.default.error.onLoadFailed: "خطأ في تنفيذ الوظيفة onLoad: {error}"
+
 modules.loader.plugins.commands.error.failed: "تعذر تحميل الامر {fileName}, خطأ: {error}"
 modules.loader.plugins.onMessage.error.failed: "تعذر تحميل المعالج {fileName}, خطأ: {error}"
 modules.loader.plugins.events.error.failed: "تعذر تحميل الحدث {fileName}, خطأ: {error}"
 modules.loader.plugins.customs.error.failed: "غير قادر على تحميل مخصص {fileName}, خطأ: {error}"
+
 modules.loader.plugins.commands.loaded: "محمل {commands}/{total} يأمر"
 modules.loader.plugins.onMessage.loaded: "محمل {onMessage}/{total} معالج الرسائل"
 modules.loader.plugins.events.loaded: "محمل {events}/{total} حدث"
 modules.loader.plugins.customs.loaded: "انطلقت {customs}/{total} العادة"
 
+# handlers
 handlers.commands.nsfwNotAllowed: "لاتسمح هذه المجموعة بأوامر nsfw."
 handlers.commands.noPermission: "انت غير مصرح لك لاستخدام."
 handlers.default.error: "حدث خطأ: {error}"
 handlers.listen.accountError: "حدث خطأ في حسابك ، يرجى المحاولة مرة أخرى لاحقًا."
 
+# resend
 plugins.resend.noMessage: "• {author} ازلت للتو رسالة معينة."
 plugins.resend.unsendNoMessageButAttach: "• {author} لم يرسل {attachmentsCount} المرفقات:"
 plugins.resend.unsendMessageAndAttach: "• {author} قمت بالغاء ارسال رسالة مع {attachmentsCount} المرفقات:\n\n{message}"
 plugins.resend.unsendMessage: "• {author} أزلت للتو رسالة:\n\n{message}"
 
+# Database
 database.mongo_url_not_found: "متغير البيئة غير موجود MONGO_URL"
 database.init: "تهيئة قاعدة البيانات {database}..."
 database.init.done: "متصل بقاعدة البيانات {database}."
@@ -54,27 +63,41 @@ database.user.get.success: "{userID} - مستخدم جديد"
 database.error: "حدث خطأ أثناء الوصول إلى قاعدة البيانات: {error}"
 database.updating: "تحديث قاعدة البيانات {database}..."
 
+# events
 plugins.events.change_thread_image.userChangedThreadImage: "\"{author}\" غيرت صورة المجموعة."
 plugins.events.change_thread_image.reversed: "\nغير مسموح بتغيير صورة المجموعة ، لذلك قمت بتغييرها مرة أخرى إلى الصورة القديمة."
-plugins.events.change_thread_image.reversed_t: "[ ANTI ALERT ]\nغير مسموح بتغيير صورة المجموعة لذلك تم اعادتها!"
+plugins.events.change_thread_image.reversed_t: "[ ANTI ALERT ]\nغير مسموح بتغيير صورة المجموعة لذلك تم اعادتها!" 
 plugins.events.change_thread_image.setNewImage: "\nغير مسموح بتغيير صور المجموعة ولكن نظرًا لعدم وجود صور قديمة ، سيتم استخدام صور جديدة."
 plugins.events.change_thread_image.unsupported: "تنسيق الصورة غير مدعوم للموضوع {threadId} ، يتم قبول URL فقط."
 
-plugins.events.subscribe.addSelf: "Bot تمت إضافته إلى المجموعة \"{threadName}\" ({threadId}) من قبل \"{authorName}\" ({authorId})."
+plugins.events.subscribe.addSelf: "Bot تمت إضافته إلى المجموعة \"{threadName}\" ({threadId}) من قبل شخص يستخدم \"{authorName}\" ({authorId})."
 
-plugins.events.subscribe.connected: "╮═══════✿══════╭\nتـــــــــم الاتـــصال بـــــــــنجاح\nاســـــم الـبوت ﹝كيفن﹞\nالـﻤـطوࢪ: ☆ :Ꮥ.ᎥᏁᎨᎧ\nأَلَا بِذِڪرِ اللَّه تَطْمَئِنَّ الْقُلُوب\nاولست الـحيات مرح ولهون الى ولهون\n╯═══════✿══════╰\n{PREFIX}"
+# ✨ الرسالة المعدلة للبوت
+plugins.events.subscribe.connected: |
+  ╮═══════✿══════╭
+  تـــــــــم الاتـــصال بـــــــــنجاح 
+  اســـــم الـبوت ﹝كيفن﹞
+  الـﻤـطوࢪ:   ☆  :Ꮥ.ᎥᏁᎨᎧ
+  أَلَا بِذِڪرِ اللَّه تَطْمَئِنَّ الْقُلُوب
+  اولست الـحيات مرح ولهون الى ولهون
+  ╯═══════✿══════╰
+  {PREFIX}
 
 plugins.events.subscribe.error.createMonitor: "تعذر إنشاء مجموعة مشرفين لهذه المجموعة."
 plugins.events.subscribe.createdMonitor: "المجموعة {threadId} سيتم رصد العمل في هذه المجموعة"
+# plugins.events.subscribe.addMembers: "\"{authorName}\" ({authorId}) اضاف {membersLength} عضو:\n{members}"
 plugins.events.subscribe.welcome: "اهلا {members} الى {threadName}!\nانت {newCount} عضو في هذه المجموعة."
 plugins.events.subscribe.warns: "{username} تم طرده بسبب تجاوز الحد الأقصى لعدد التحذيرات."
 
 plugins.events.unsubscribe.bot.left: "Bot غادر \"{threadName}\" ({threadId})."
 plugins.events.unsubscribe.bot.kicked: "Bot تم طرده من \"{threadName}\" ({threadId}) بواسطة \"{authorName}\" ({authorId})."
-plugins.events.unsubscribe.left: "\"{leftName}\" ({leftId}) غادر المجموعة."
-plugins.events.unsubscribe.kicked: "\"{leftName}\" ({leftId}) تم طرده من قبل \"{authorName}\" ({authorId})."
+# plugins.events.unsubscribe.left: "\"{leftName}\" ({leftId}) غادر المجموعة."
+# plugins.events.unsubscribe.kicked: "\"{leftName}\" ({leftId}) تم طرده من قبل\"{authorName}\" ({authorId})."
+plugins.events.unsubscribe.left: "{leftName} كان عب "
+plugins.events.unsubscribe.kicked: "{leftName} جغمو الادمن 🙂"
 plugins.events.unsubscribe.antiOut.error: "[ ANTIOUT ] لا يمكن إضافة عضو مرة أخرى إلى المجموعة!"
-plugins.events.unsubscribe.antiOut.success: "[ ANTIOUT ] مارق بكرامتك وين؟ رجعناك تاني 🗿🔨"
+plugins.events.unsubscribe.antiOut.success: "[ ANTIOUT ] مارق بكرامتك وين يا عب يا عب بل بس هنا  🗿🔨"
+
 
 plugins.events.thread-call.startedCall: "\"{authorName}\" ({authorId}) بدأ مكالمة."
 plugins.events.thread-call.startedVideoCall: "\"{authorName}\" ({authorId}) فتح مكالمة فيديو جماعية."
@@ -90,9 +113,8 @@ plugins.events.thread-update.color.changed: "\"{authorName}\" ({authorId}) تغ�
 plugins.events.thread-update.emoji.changed: "\"{authorName}\" ({authorId}) تغير الرمز التعبيري للمجموعة من {oldEmoji} الى {newEmoji}."
 plugins.events.thread-update.approvalMode.changed: "\"{authorName}\" ({authorId}) تم تغيير وضع الإشراف على الأعضاء إلى {newApprovalMode}."
 plugins.events.thread-update.admins.added: "\"{authorName}\" ({authorId}) اضاف \"{targetName}\" ({targetId}) الى مدير مجموعة."
-plugins.events.thread-update.admins.removed: "\"{authorName}\" ({authorId}) حذف \"{targetName}\" ({targetId}) من مدراء المجموعة."
-
-plugins.events.user-nickname.changedBy: "\"{authorName}\" ({authorId}) غير لقبه \"{targetName}\" ({targetId}) الى \"{newNickname}\"."
-plugins.events.user-nickname.changedBySelf: "\"{authorName}\" ({authorId}) غير لقبه الى \"{newNickname}\"."
-plugins.events.user-nickname.reversed: "\nلم يُسمح بتغيير الاسم المستعار ، لذلك قمت بتغييره مرة أخرى إلى الاسم المستعار القديم."
-plugins.events.user-nickname.reversed_t: "[ ANTI ALERT ] تغير اللقب غير مسموح به لذلك تمت إعادته"
+plugins.events.thread-update.admins.removed:  "\"{authorName}\" ({authorId}) حذف \"{targetName}\" ({targetId}) من مدراء المجموعة."
+plugin.events.user-nickname.changedBy: "\"{authorName}\" ({authorId}) غير لقبه \"{targetName}\" ({targetId}) الى \"{newNickname}\"."
+plugin.events.user-nickname.changedBySelf: "\"{authorName}\" ({authorId}) غير لقبه الى \"{newNickname}\"."
+plugin.events.user-nickname.reversed: "\nلم يُسمح بتغيير الاسم المستعار ، لذلك قمت بتغييره مرة أخرى إلى الاسم المستعار القديم."
+plugin.events.user-nickname.reversed_t: "[ ANTI ALERT ] تغير الغب غير مسموح به لزالك تمت اعادته"
