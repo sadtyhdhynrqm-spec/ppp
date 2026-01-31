@@ -80,11 +80,11 @@ plugins.events.subscribe.connected: |
   اســـــم الـبوت ﹝كيفن﹞
  
   الـﻤـطوࢪ:   ☆  :Ꮥ.ᎥᏁᎨᎧ
-  
+ 
   أَلَا بِذِڪرِ اللَّه تَطْمَئِنَّ الْقُلُوب
-  
   ╯═══════✿══════╰
- {PREFIX}
+  {PREFIX}
+
 plugins.events.subscribe.error.createMonitor: "تعذر إنشاء مجموعة مشرفين لهذه المجموعة."
 plugins.events.subscribe.createdMonitor: "المجموعة {threadId} سيتم رصد العمل في هذه المجموعة"
 # plugins.events.subscribe.addMembers: "\"{authorName}\" ({authorId}) اضاف {membersLength} عضو:\n{members}"
