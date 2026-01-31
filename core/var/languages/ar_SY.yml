@@ -76,13 +76,15 @@ plugins.events.subscribe.addSelf: "Bot تمت إضافته إلى المجموع
 plugins.events.subscribe.connected: |
   ╮═══════✿══════╭
   تـــــــــم الاتـــصال بـــــــــنجاح 
+ 
   اســـــم الـبوت ﹝كيفن﹞
+ 
   الـﻤـطوࢪ:   ☆  :Ꮥ.ᎥᏁᎨᎧ
+  
   أَلَا بِذِڪرِ اللَّه تَطْمَئِنَّ الْقُلُوب
-  اولست الـحيات مرح ولهون الى ولهون
+  
   ╯═══════✿══════╰
-  {PREFIX}
-
+ ﹝{PREFIX}﹞.... ﹝الـــــــبادئة﹞
 plugins.events.subscribe.error.createMonitor: "تعذر إنشاء مجموعة مشرفين لهذه المجموعة."
 plugins.events.subscribe.createdMonitor: "المجموعة {threadId} سيتم رصد العمل في هذه المجموعة"
 # plugins.events.subscribe.addMembers: "\"{authorName}\" ({authorId}) اضاف {membersLength} عضو:\n{members}"
