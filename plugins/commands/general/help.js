@@ -1,22 +1,22 @@
 const config = {
-    name: "مساعدة",
-    aliases: ["help", "اوامر"],
-    description: "عرض قائمة أوامر البوت بشكل مفصل",
-    usage: "",
-    credits: "XaviaTeam"
-}
+  name: "مساعدة",
+  aliases: ["help", "اوامر"],
+  description: "عرض قائمة أوامر البوت بشكل مفصل",
+  usage: "",
+  credits: "XaviaTeam"
+};
 
 async function onCall({ message, args, prefix, userPermissions }) {
-    const { commandsConfig } = global.plugins;
+  const { commandsConfig } = global.plugins;
 
-    // لو طلب شرح أمر معيّن
-    const commandName = args[0]?.toLowerCase();
-    if (commandName) {
-        const cmd = commandsConfig.get(commandName);
-        if (!cmd || cmd.isHidden)
-            return message.reply("❌ الأمر غير موجود");
+  // ───── شرح أمر محدد ─────
+  const commandName = args[0]?.toLowerCase();
+  if (commandName) {
+    const cmd = commandsConfig.get(commandName);
+    if (!cmd || cmd.isHidden)
+      return message.reply("❌ الأمر غير موجود");
 
-        return message.reply(
+    return message.reply(
 `•◌────˚❀˚───◌ ────˚❀˚────◌
 📌 اسم الأمر: ${cmd.name}
 🔁 الأسماء البديلة: ${cmd.aliases?.join(", ") || "لا يوجد"}
@@ -25,64 +25,90 @@ async function onCall({ message, args, prefix, userPermissions }) {
 🛠️ الاستخدام:
 ${prefix}${cmd.name} ${cmd.usage || ""}
 
-📂 القسم: ${cmd.category}
+📂 القسم: ${cmd.category || "غير مصنف"}
 ⏱️ الإنتظار: ${cmd.cooldown || 3} ثواني
 👤 المطوّر: ${cmd.credits || "غير معروف"}
-•◌────˚❀˚───◌ ────˚❀˚────◌
-`);
-    }
+•◌────˚❀˚───◌ ────˚❀˚────◌`
+    );
+  }
 
-    let adminCmds = [];
-    let economyCmds = [];
-    let entertainmentCmds = [];
-    let generalCmds = [];
-    let groupCmds = [];
-    let mediaCmds = [];
-    let nsfwCmds = [];
+  // ───── القوائم ─────
+  let adminCmds = [];
+  let economyCmds = [];
+  let entertainmentCmds = [];
+  let generalCmds = [];
+  let groupCmds = [];
+  let mediaCmds = [];
+  let nsfwCmds = [];
 
-    for (const [key, cmd] of commandsConfig.entries()) {
-        if (cmd.isHidden) continue;
-        if (!cmd.permissions) cmd.permissions = [0,1,2];
-        if (!cmd.permissions.some(p => userPermissions.includes(p))) continue;
+  for (const [key, cmd] of commandsConfig.entries()) {
+    if (cmd.isHidden) continue;
 
-        const name = cmd.name || key;
-        const cat = (cmd.category || "").toLowerCase();
+    if (!cmd.permissions) cmd.permissions = [0, 1, 2];
+    if (!cmd.permissions.some(p => userPermissions.includes(p))) continue;
 
-        if (cat.includes("admin") || cat.includes("المطور")) adminCmds.push(name);
-        else if (cat.includes("economy") || cat.includes("اقتصاد")) economyCmds.push(name);
-        else if (cat.includes("fun") || cat.includes("game") || cat.includes("ترفيه")) entertainmentCmds.push(name);
-        else if (cat.includes("general") || cat.includes("عام")) generalCmds.push(name);
-        else if (cat.includes("group") || cat.includes("المجموعه")) groupCmds.push(name);
-        else if (cat.includes("media") || cat.includes("وسائط")) mediaCmds.push(name);
-        else if (cat.includes("nsfw") || cat.includes("اباحي")) nsfwCmds.push(name);
-    }
+    const name = cmd.name || key;
 
-    const formatCmds = (arr) =>
-        arr.length ? arr.map(c => `▣ ${c}`).join("  ") : "لا توجد أوامر";
+    // ⭐ هنا الحل: حتى لو مافي category
+    const cat = (
+      (cmd.category || "") +
+      " " +
+      name
+    ).toLowerCase();
 
-    let total =
-        adminCmds.length +
-        economyCmds.length +
-        entertainmentCmds.length +
-        generalCmds.length +
-        groupCmds.length +
-        mediaCmds.length +
-        nsfwCmds.length;
+    if (cat.includes("admin") || cat.includes("المطور"))
+      adminCmds.push(name);
 
-    let body =
+    else if (cat.includes("economy") || cat.includes("اقتصاد"))
+      economyCmds.push(name);
+
+    else if (
+      cat.includes("fun") ||
+      cat.includes("game") ||
+      cat.includes("ترفيه") ||
+      ["biden", "drake", "communism"].some(n => cat.includes(n))
+    )
+      entertainmentCmds.push(name);
+
+    else if (cat.includes("general") || cat.includes("عام"))
+      generalCmds.push(name);
+
+    else if (cat.includes("group") || cat.includes("المجموعه"))
+      groupCmds.push(name);
+
+    else if (cat.includes("media") || cat.includes("وسائط"))
+      mediaCmds.push(name);
+
+    else if (cat.includes("nsfw") || cat.includes("اباحي"))
+      nsfwCmds.push(name);
+  }
+
+  const formatCmds = arr =>
+    arr.length ? arr.map(c => `▣ ${c}`).join("  ") : "لا توجد أوامر";
+
+  const total =
+    adminCmds.length +
+    economyCmds.length +
+    entertainmentCmds.length +
+    generalCmds.length +
+    groupCmds.length +
+    mediaCmds.length +
+    nsfwCmds.length;
+
+  const body =
 `•◌───˚❀˚─◌─˚❀˚───◌•◌───˚❀˚
 
-⌈  ADMIN ⌋
+⌈ ADMIN ⌋
 ${formatCmds(adminCmds)}
 
 •◌────˚❀˚───◌ ────˚❀˚────
 
-⌈  ECONOMY ⌋
+⌈ ECONOMY ⌋
 ${formatCmds(economyCmds)}
 
 •◌────˚❀˚───◌ ────˚❀˚────
 
-⌈  ENTERTAINMENT ⌋
+⌈ ENTERTAINMENT ⌋
 ${formatCmds(entertainmentCmds)}
 
 •◌────˚❀˚───◌ ────˚❀˚────
@@ -105,16 +131,21 @@ ${formatCmds(mediaCmds)}
 ⌈ NSFW ⌋
 ${formatCmds(nsfwCmds)}
 
-•◌────˚❀˚───◌ ────˚❀˚───ـ
+•◌────˚❀˚───◌ ────˚❀˚───
 ⇒ 📊 المجموع: ${total} أمر
 ⇒ ℹ️ استخدم: ${prefix}[اسم_الأمر] لعرض التفاصيل
 `;
 
-    const imageUrl = "https://i.ibb.co/27RrNnX1/file-000000003da0722fafdd0c28522ad11c.png";
-    return message.reply({ body, attachment: await global.getStream(imageUrl) });
+  const imageUrl =
+    "https://i.ibb.co/27RrNnX1/file-000000003da0722fafdd0c28522ad11c.png";
+
+  return message.reply({
+    body,
+    attachment: await global.getStream(imageUrl)
+  });
 }
 
 export default {
-    config,
-    onCall
-  }
+  config,
+  onCall
+};
