@@ -110,7 +110,7 @@ ${formatCmds(nsfwCmds)}
 ⇒ ℹ️ استخدم: ${prefix}[اسم_الأمر] لعرض التفاصيل
 `;
 
-    const imageUrl = "https://i.ibb.co/27RrNnX1/file-000000003da0722fafdd0c28522ad11c.png";
+    const imageUrl = "https://i.ibb.co/sJp75WCF/75b56d9d0b03b232909a1d1cb61f00a1.jpg";
     return message.reply({ body, attachment: await global.getStream(imageUrl) });
 }
 
