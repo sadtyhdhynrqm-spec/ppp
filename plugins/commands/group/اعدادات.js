@@ -1,12 +1,22 @@
 const config = {
     name: "اعدادات",
     aliases: ["setting"],
-    description: "🛡 إعدادات حماية المجموعة",
+    description: "🛡 إعدادات وحماية المجموعة",
     cooldown: 3,
     permissions: [1],
     credits: "ᏕᎥᏁᎨᎧ",
 };
 
+/* ===== رسائل التحذير (القديمة بدون تعديل) ===== */
+const warnings = {
+    antiSpam: "﹝سبام﹞: ممنوع السبام، التكرار قد يؤدي للطرد",
+    antiOut: " ﹝خروج﹞: ماشي وين يا عب يا عب بل بس هنا ",
+    antiChangeGroupName: "﹝مجموعة﹞: يمنع تغيير اسم المجموعة",
+    antiChangeGroupImage: "﹝تحذير﹞: يمنع تغيير صورة المجموعة",
+    antiChangeNickname: "تغير الكنيات غير مسموح به ﹝كنيات﹞",
+};
+
+/* ===== لغة القوائم ===== */
 const langData = {
     ar_SY: {
         menu:
@@ -17,56 +27,51 @@ const langData = {
 ③ [{antiChangeGroupName}] ✦ حماية اسم المجموعة
 ④ [{antiChangeGroupImage}] ✦ حماية صورة المجموعة
 ⑤ [{antiChangeNickname}] ✦ حماية الكُنى
-⑥ [{notifyChange}] ✦ إشعارات الأحداث
 
 ╰━━━━━━━━━━━━━━━━━━━━╯
-↫ رد بالأرقام لتغيير الإعدادات`,
+↫ رد بالأرقام للتغيير`,
 
-        warnings: {
-            antiSpam: "﹝سبام﹞: ممنوع السبام، التكرار قد يؤدي للطرد",
-            antiOut: " ﹝خروج﹞: ماشي وين يا عب يا عب بل بس هنا ",
-            antiChangeGroupName: "﹝مجموعة﹞: يمنع تغيير اسم المجموعة",
-            antiChangeGroupImage: "﹝تحذير﹞: يمنع تغيير صورة المجموعة",
-            antiChangeNickname: "تغير الكنيات غير مسموح به ﹝كنيات﹞",
-        },
-
-        notGroup: "❌ هذا الأمر يعمل داخل المجموعات فقط",
-        invalid: "❌ اختيار غير صالح",
-        success: "✅ تم حفظ الإعدادات بنجاح",
-        error: "❌ حدث خطأ",
-        botNotAdmin:
-            "⚠️ البوت ليس مشرفاً، سيتم تعطيل السبام ومنع الخروج",
         confirm:
-`╭━━〔 ⚙️ الإعدادات الجديدة 〕━━╮
+`╭━━〔 ⚙️ تأكيد الإعدادات 〕━━╮
 
 ① [{antiSpam}] مكافحة السبام
 ② [{antiOut}] منع الخروج
 ③ [{antiChangeGroupName}] حماية الاسم
 ④ [{antiChangeGroupImage}] حماية الصورة
 ⑤ [{antiChangeNickname}] حماية الكنية
-⑥ [{notifyChange}] إشعارات
 
 ╰━━━━━━━━━━━━━━╯
-👍 اضغط حفظ`,
+👍 اضغط للحفظ`,
+
+        notGroup: "❌ الأمر يعمل داخل المجموعات فقط",
+        invalid: "❌ اختيار غير صالح",
+        success: "✅ تم حفظ الإعدادات",
+        botNotAdmin:
+            "⚠️ البوت ليس مشرفاً، تم تعطيل بعض الحمايات",
     },
 };
 
+/* ===== دالة تحذير مضمونة ===== */
+async function sendWarning(api, threadID, key) {
+    const msg = warnings[key];
+    if (!msg) return;
+    await api.sendMessage(msg, threadID);
+}
+
+/* ===== حفظ الإعدادات ===== */
 async function confirmChange({ message, getLang, eventData }) {
     if (message.reaction !== "👍") return;
 
-    const { newSettings } = eventData;
     await global.controllers.Threads.updateData(message.threadID, {
-        antiSettings: newSettings,
+        antiSettings: eventData.newSettings,
     });
 
     await message.send(getLang("success"));
 }
 
+/* ===== اختيار القائمة ===== */
 async function chooseMenu({ message, getLang, data }) {
-    const choices = message.args
-        .map(Number)
-        .filter((n) => n >= 1 && n <= 6);
-
+    const choices = message.args.map(Number).filter(n => n >= 1 && n <= 5);
     if (!choices.length) return message.reply(getLang("invalid"));
 
     const current = data.thread.data?.antiSettings || {};
@@ -76,43 +81,33 @@ async function chooseMenu({ message, getLang, data }) {
         "antiChangeGroupName",
         "antiChangeGroupImage",
         "antiChangeNickname",
-        "notifyChange",
     ];
 
     const newSettings = {};
-    for (const k of keys)
-        newSettings[k] = !!current[k];
+    for (const k of keys) newSettings[k] = !!current[k];
 
     for (const c of choices) {
         const key = keys[c - 1];
         newSettings[key] = !newSettings[key];
-
-        // ⚠️ إرسال رسالة التحذير الخاصة بالإعداد
-        if (langData.ar_SY.warnings[key])
-            await message.send(langData.ar_SY.warnings[key]);
     }
 
     const isBotAdmin = data.thread.info.adminIDs.includes(global.botID);
     if (!isBotAdmin) {
-        newSettings.antiSpam = false;
         newSettings.antiOut = false;
+        newSettings.antiChangeGroupName = false;
+        newSettings.antiChangeGroupImage = false;
         await message.reply(getLang("botNotAdmin"));
     }
 
-    const display = {};
+    const show = {};
     for (const k of keys)
-        display[k] = newSettings[k] ? "✅" : "❌";
+        show[k] = newSettings[k] ? "✅" : "❌";
 
-    const msg = await message.reply(
-        getLang("confirm", display)
-    );
-
-    msg.addReactEvent({
-        callback: confirmChange,
-        newSettings,
-    });
+    const msg = await message.reply(getLang("confirm", show));
+    msg.addReactEvent({ callback: confirmChange, newSettings });
 }
 
+/* ===== أمر الإعدادات ===== */
 async function onCall({ message, getLang, data }) {
     if (!data.thread?.info?.isGroup)
         return message.reply(getLang("notGroup"));
@@ -125,7 +120,6 @@ async function onCall({ message, getLang, data }) {
         "antiChangeGroupName",
         "antiChangeGroupImage",
         "antiChangeNickname",
-        "notifyChange",
     ]) {
         show[k] = settings[k] ? "✅" : "❌";
     }
@@ -134,8 +128,46 @@ async function onCall({ message, getLang, data }) {
     msg.addReplyEvent({ callback: chooseMenu });
 }
 
+/* ===== الحمايات (مضمونة التحذير) ===== */
+async function onEvent({ event, api, Threads }) {
+    const { threadID, logMessageType, logMessageData, author } = event;
+    if (!threadID) return;
+
+    const threadData = await Threads.getData(threadID);
+    const settings = threadData.data?.antiSettings || {};
+
+    /* تغيير الكنية */
+    if (logMessageType === "log:thread-nickname" && settings.antiChangeNickname) {
+        const oldNick = logMessageData?.oldNickname;
+        const userID = logMessageData?.participant_id;
+        if (oldNick && userID) {
+            await api.changeNickname(oldNick, threadID, userID);
+            await sendWarning(api, threadID, "antiChangeNickname");
+        }
+    }
+
+    /* تغيير اسم المجموعة */
+    if (logMessageType === "log:thread-name" && settings.antiChangeGroupName) {
+        await api.setTitle(logMessageData.oldName, threadID);
+        await sendWarning(api, threadID, "antiChangeGroupName");
+    }
+
+    /* تغيير صورة المجموعة */
+    if (logMessageType === "log:thread-image" && settings.antiChangeGroupImage) {
+        await api.changeGroupImage(logMessageData.oldImage, threadID);
+        await sendWarning(api, threadID, "antiChangeGroupImage");
+    }
+
+    /* الخروج */
+    if (logMessageType === "log:unsubscribe" && settings.antiOut) {
+        await api.addUserToGroup(author, threadID);
+        await sendWarning(api, threadID, "antiOut");
+    }
+}
+
 export default {
     config,
     langData,
     onCall,
+    onEvent,
 };
