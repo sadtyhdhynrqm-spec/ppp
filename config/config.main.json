@@ -1,37 +1,33 @@
 {
-  "APPSTATE_PATH": "./appstate.json",
-  "APPSTATE_PROTECTION": true,
-
-  "AUTO_PING_SERVER": false,
-  "ALLOW_INBOX": false,
-
-  "DATABASE": "JSON",
-  "DATABASE_JSON_BEAUTIFY": true,
-
-  "FCA_OPTIONS": {
-    "pauseLog": true,
-    "logLevel": "silent",
-    "selfListen": false,
-    "listenEvents": true,
-    "forceLogin": false,
-    "userAgent": "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/96.0.4664.45 Mobile Safari/537.36"
-  },
-
-  "LANGUAGE": "ar_SY",
-  "LOG_LEVEL": 1,
-
-  "MODERATORS": [
-    "61586897962846"
-  ],
-  "ABSOLUTES": [
-    "61586897962846"
-  ],
-
-  "NAME": "𝐊𝐈𝐅𝐀𝐍 𝐁𝐎𝐓 초❖ ⇡",
-  "PREFIX": "-",
-
-  "timezone": "Africa/Khartoum",
-
-  "REFRESH": 0,
-  "MAX_BALANCE_LIMIT": -1
+    "APPSTATE_PATH": "./appstate.json",
+    "APPSTATE_PROTECTION": true,
+    "AUTO_PING_SERVER": true,
+    "ALLOW_INBOX": false,
+    "DATABASE": "JSON",
+    "DATABASE_JSON_BEAUTIFY": true,
+    "FCA_OPTIONS": {
+        "pauseLog": false,
+        "logLevel": "silent",
+        "selfListen": false,
+        "listenEvents": true,
+        "forceLogin": true,
+        "userAgent": "Mozilla/5.0 (Linux; Android 9; SM-G973U Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Mobile Safari/537.3",
+        "online": true
+    },
+    "LANGUAGE": "ar_SY",
+    "LOG_LEVEL": 1,
+    "MODERATORS": [
+        "61586897962846", 
+        "", 
+        ""
+    ],
+    "ABSOLUTES": [
+        "61586897962846", 
+        "", 
+        ""
+    ],
+    "NAME": "𝐊𝐈𝐅𝐀𝐍 𝐁𝐎𝐓 초",
+    "PREFIX": "/",
+    "timezone": "Asia/Manila",
+    "REFRESH": "43200000"
 }
