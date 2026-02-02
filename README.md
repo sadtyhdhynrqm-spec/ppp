@@ -1,4 +1,4 @@
-![XaviaBanner](https://i.ibb.co/K0ZSt89/XaviaFCB.png)
+![XaviaBanner](https://i.ibb.co/Y7p0pQp/help-command.png)
 
 # Xavia
 
