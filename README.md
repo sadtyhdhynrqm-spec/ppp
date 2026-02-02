@@ -1,22 +1,25 @@
-![𝐊𝐈𝐅𝐀𝐍𝐁𝐎𝐓초]()
+![XaviaBanner](https://i.ibb.co/K0ZSt89/XaviaFCB.png)
 
-# 
+# Xavia
 
-• A Facebook Chat Bot made by 𝐊𝐈𝐅𝐀𝐍𝐁𝐎𝐓초<br />
+• A Facebook Chat Bot made by XaviaTeam<br />
 • This Project will turn your Facebook account into a **_Facebook Chat Bot_** with a lot of Features
 
-> تم تعديل النسخه وتطويرها لدعم 24 مستقر
->  - Enhanced with Nexus-fCA integration and advanced command management system
+> **🛠️ Fixed & Improved by [Romeo Calyx](https://github.com/RomeoCalyx)**  - Enhanced with Nexus-fCA integration and advanced command management system
 
 ![illustration](https://i.ibb.co/5MCXJkX/309961956-852941662506289-2438726751602905775-n.png)
 
 <hr />
 
-
+## Requirements
 
 • [NodeJS](https://nodejs.org/en/) v16.x
 
-مميزات النسخه دعم كامل مع. اعادت سياق الاوامر 
+## Installation
+
+• [Install Xavia on Replit](https://www.youtube.com/watch?v=WUva_shyMqM)
+
+• Import to [Replit](https://replit.com/github/XaviaTeam/XaviaBot) / [Glitch](https://glitch.com/edit/#!/import/github/XaviaTeam/XaviaBot)
 
 **OR**
 
