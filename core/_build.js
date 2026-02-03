@@ -16,7 +16,6 @@ import * as aes from "./var/modules/aes.js";
 import { checkAppstate } from "./var/modules/checkAppstate.js";
 
 import replitDB from "@replit/database";
-import { execSync } from "child_process";
 import { XDatabase } from "./handlers/database.js";
 import { Assets } from "./handlers/assets.js";
 
@@ -26,12 +25,12 @@ import crypto from "crypto";
    GLOBAL PROTECTION
 ======================= */
 process.on("unhandledRejection", (err) => {
-  logger.error("Unhandled Rejection:");
+  logger.error("Unhandled Rejection");
   console.error(err);
 });
 
 process.on("uncaughtException", (err) => {
-  logger.error("Uncaught Exception:");
+  logger.error("Uncaught Exception");
   console.error(err);
 });
 
@@ -42,9 +41,7 @@ process.on("SIGHUP", shutdownSafe);
 function shutdownSafe() {
   try {
     logger.system(getLang("build.start.exit"));
-    if (global.listenMqtt?.stopListening) {
-      global.listenMqtt.stopListening();
-    }
+    global.listenMqtt?.stopListening?.();
   } catch {}
   process.exit(0);
 }
@@ -90,7 +87,7 @@ async function start() {
     await booting(api, xDatabase);
   } catch (err) {
     logger.error(err);
-    shutdownSafe();
+    process.exit(1);
   }
 }
 
@@ -103,22 +100,52 @@ async function booting(api, xDatabase) {
     Users: xDatabase.users,
   };
 
-  startListen(api, xDatabase);
-  refreshState(); // فقط حفظ appstate
+  await startListen(api, xDatabase);
+  refreshState();
 }
 
 /* =======================
-   SAFE MQTT (NO REFRESH)
+   MQTT (AUTO RECOVER)
 ======================= */
 async function startListen(api, xDatabase) {
   const listenerID = generateListenerID();
   global.listenerID = listenerID;
 
-  global.listenMqtt = api.listenMqtt(
-    await handleListen(listenerID, xDatabase)
-  );
+  const listenHandler = await handleListen(listenerID, xDatabase);
+  global.listenMqtt = api.listenMqtt(listenHandler);
 
-  logger.custom("MQTT listener started (stable mode).", "MQTT");
+  global.listenMqtt.on("error", async (err) => {
+    logger.error("MQTT connection lost, reconnecting...");
+    console.error(err);
+    await restartBot();
+  });
+
+  logger.custom("MQTT listener started (auto recover enabled).", "MQTT");
+}
+
+/* =======================
+   AUTO RECONNECT
+======================= */
+async function restartBot() {
+  try {
+    global.listenMqtt?.stopListening?.();
+
+    logger.system("Reconnecting Facebook session...");
+
+    const api = await loginState();
+    global.api = api;
+    global.botID = api.getCurrentUserID();
+
+    const xDatabase = new XDatabase(api, global.config.DATABASE);
+    await xDatabase.init();
+
+    await booting(api, xDatabase);
+
+    logger.system("Bot reconnected successfully ✔");
+  } catch (err) {
+    logger.error("Reconnect failed");
+    console.error(err);
+  }
 }
 
 /* =======================
@@ -175,7 +202,12 @@ async function loginState() {
 
   const options = {
     ...global.config.FCA_OPTIONS,
-    enableAutoRefresh: false,
+
+    enableAutoRefresh: true, // 🔴 سبب حل مشكلة 6 ساعات
+    forceLogin: false,
+    listenEvents: true,
+    selfListen: false,
+
     ultraLowBanMode: true,
     enableAntiDetection: true,
     enableHumanBehavior: true,
