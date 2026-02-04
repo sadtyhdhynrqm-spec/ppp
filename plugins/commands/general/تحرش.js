@@ -1,95 +1,83 @@
-import axios from 'axios';
-import fs from 'fs';
-import { v4 as uuidv4 } from 'uuid';
-import OSS from 'ali-oss';
-import Jimp from 'jimp';
+import Jimp from "jimp";
 
-export const config = {
-    name: "تحرش",
-    version: "0.0.1-xaviaBot-port",
-    permissions: [2],
-    credits: "Mirai Team",
-    description: "رد على شخص لصفعه مع تعديل AI على الصورة.",
-    usage: "تحرشAI (بالرد أو المنشن)",
-    cooldowns: 5
+const langData = {
+  "en_US": {
+    "processing": "⏳ جاري تجهيز الصورة...",
+    "no_target": "❌ رد على شخص أو منشنه أولاً.",
+    "done": "🚀 الصورة جاهزة:",
+    "invalid_style": "❌ النمط غير موجود، استخدم: كرتوني | مضحك | اسود_ابيض"
+  }
 };
 
-async function processImageEdit(filePath, prompt) {
-    const timestamp = Date.now();
-    const anonymousId = uuidv4();
-    const sboxGuid = Buffer.from(`${timestamp}|${Math.floor(Math.random()*1000)}|${Math.floor(Math.random()*1000000000)}`).toString('base64');
-
-    const client = axios.create({
-        headers: {
-            'Cookie': `anonymous_user_id=${anonymousId}; sbox-guid=${sboxGuid}`,
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-        }
-    });
-
-    const stsRes = await client.get('https://notegpt.io/api/v1/oss/sts-token');
-    const stsData = stsRes.data.data;
-
-    const ossClient = new OSS({
-        region: 'oss-us-west-1',
-        accessKeyId: stsData.AccessKeyId,
-        accessKeySecret: stsData.AccessKeySecret,
-        stsToken: stsData.SecurityToken,
-        bucket: 'nc-cdn'
-    });
-
-    const ossPath = `notegpt/web3in1/${uuidv4()}.jpg`;
-    await ossClient.put(fs.createReadStream(filePath), ossPath);
-    const uploadedUrl = `https://nc-cdn.oss-us-west-1.aliyuncs.com/${ossPath}`;
-
-    const editRes = await client.post('https://notegpt.io/api/v2/images/handle', {
-        "image_url": uploadedUrl,
-        "user_prompt": prompt,
-        "type": 60,
-        "model": "google/nano-banana"
-    });
-    const sessionId = editRes.data.data.session_id;
-
-    for (let i = 0; i < 30; i++) {
-        const statusRes = await client.get(`https://notegpt.io/api/v2/images/status?session_id=${sessionId}`);
-        if (statusRes.data.data.status === 'succeeded') {
-            return statusRes.data.data.results.map(r => r.url);
-        }
-        await new Promise(r => setTimeout(r, 4000));
-    }
-    throw new Error("Timeout");
+async function downloadImage(url) {
+  return await Jimp.read(url);
 }
 
-export async function onCall({ message, args, usersData, sh }) {
-    let targetID;
-    if (message.type === "message_reply") {
-        targetID = message.messageReply.senderID;
-    } else if (Object.keys(message.mentions).length > 0) {
-        targetID = Object.keys(message.mentions)[0];
-    } else {
-        return sh.reply("❌ رد على شخص أو منشنه أولاً.");
-    }
+async function createSlapImage(targetUrl, userUrl, style) {
+  const image1 = await downloadImage(targetUrl);
+  const image2 = await downloadImage(userUrl);
 
-    sh.reply("⏳ جاري تجهيز الصورة...");
+  image1.cover(720, 720);
+  image2.cover(720, 720);
 
+  const background = new Jimp(1440, 720, 0xffffffff);
+  background.composite(image1, 0, 0);
+  background.composite(image2, 720, 0);
+
+  // تطبيق الأنماط
+  switch (style) {
+    case "كرتوني":
+      background.posterize(6).blur(1);
+      break;
+    case "مضحك":
+      background.color([{ apply: "hue", params: [90] }]).contrast(0.5);
+      break;
+    case "اسود_ابيض":
+      background.grayscale();
+      break;
+    default:
+      throw new Error("invalid_style");
+  }
+
+  return await background.getBufferAsync(Jimp.MIME_PNG);
+}
+
+async function onCall({ message, args, usersData, getLang }) {
+  let targetID;
+
+  if (message.type === "message_reply") {
+    targetID = message.messageReply.senderID;
+  } else if (Object.keys(message.mentions).length > 0) {
+    targetID = Object.keys(message.mentions)[0];
+  } else {
+    return message.reply(getLang("no_target"));
+  }
+
+  // اختيار النمط، الافتراضي "كرتوني"
+  const style = args[0] || "كرتوني";
+
+  message.reply(getLang("processing"));
+
+  try {
     const targetUrl = await usersData.getAvatarUrl(targetID);
     const userUrl = await usersData.getAvatarUrl(message.senderID);
 
-    const background = new Jimp({ width: 1440, height: 720, color: 0xffffffff });
-    const image1 = await Jimp.read(targetUrl);
-    const image2 = await Jimp.read(userUrl);
-
-    image1.cover(720, 720);
-    image2.cover(720, 720);
-    background.composite(image1, 0, 0);
-    background.composite(image2, 720, 0);
-
-    const cachePath = "./cache/slap.png";
-    await background.writeAsync(cachePath);
-
-    try {
-        const editedImages = await processImageEdit(cachePath, "اجعلها كرتونية ومرحة");
-        sh.str("🚀 الصورة جاهزة:", editedImages[0]);
-    } catch (err) {
-        sh.reply("❌ حصل خطأ أثناء تعديل الصورة.");
+    const buffer = await createSlapImage(targetUrl, userUrl, style);
+    message.reply({
+      body: getLang("done"),
+      attachment: buffer
+    });
+  } catch (err) {
+    if (err.message === "invalid_style") {
+      message.reply(getLang("invalid_style"));
+    } else {
+      console.error(err);
+      message.reply("❌ حصل خطأ أثناء تجهيز الصورة.");
     }
+  }
 }
+
+export default {
+  langData,
+  onCall
+};
