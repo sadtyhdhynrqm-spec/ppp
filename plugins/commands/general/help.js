@@ -17,7 +17,7 @@ async function onCall({ message, args, prefix, userPermissions }) {
             return message.reply("❌ الأمر غير موجود");
 
         return message.reply(
-`•◌────˚❀˚───◌ ────˚❀˚────◌
+`•◌❖━┄⋄┄━╃⊱𝑴𝑨𝑭𝑰⊰╄━┄⋄┄━❖◌ 
 📌 اسم الأمر: ${cmd.name}
 🔁 الأسماء البديلة: ${cmd.aliases?.join(", ") || "لا يوجد"}
 📝 الوصف: ${cmd.description || "لا يوجد"}
@@ -28,7 +28,7 @@ ${prefix}${cmd.name} ${cmd.usage || ""}
 📂 القسم: ${cmd.category}
 ⏱️ الإنتظار: ${cmd.cooldown || 3} ثواني
 👤 المطوّر: ${cmd.credits || "غير معروف"}
-•◌────˚❀˚───◌ ────˚❀˚────◌
+•❖━┄⋄┄━╃⊱𝑴𝑨𝑭𝑰⊰╄━┄⋄┄━❖
 `);
     }
 
@@ -58,7 +58,7 @@ ${prefix}${cmd.name} ${cmd.usage || ""}
     }
 
     const formatCmds = (arr) =>
-        arr.length ? arr.map(c => `▣ ${c}`).join("  ") : "لا توجد أوامر";
+        arr.length ? arr.map(c => `⋄ ${c}`).join("  ") : "لا توجد أوامر";
 
     let total =
         adminCmds.length +
@@ -75,37 +75,37 @@ ${prefix}${cmd.name} ${cmd.usage || ""}
 ⌈  ADMIN ⌋
 ${formatCmds(adminCmds)}
 
-•◌────˚❀˚───◌ ────˚❀˚────
+•◌────˚❀˚───◌ ────˚❀˚────⋄
 
 ⌈  ECONOMY ⌋
 ${formatCmds(economyCmds)}
 
-•◌────˚❀˚───◌ ────˚❀˚────
+•◌────˚❀˚───◌ ────˚❀˚────⋄
 
 ⌈  ENTERTAINMENT ⌋
 ${formatCmds(entertainmentCmds)}
 
-•◌────˚❀˚───◌ ────˚❀˚────
+•◌────˚❀˚───◌ ────˚❀˚────⋄
 
 ⌈ GENERAL ⌋
 ${formatCmds(generalCmds)}
 
-•◌────˚❀˚───◌ ────˚❀˚────
+•◌────˚❀˚───◌ ────˚❀˚────⋄
 
 ⌈ GROUP ⌋
 ${formatCmds(groupCmds)}
 
-•◌────˚❀˚───◌ ────˚❀˚────
+•◌────˚❀˚───◌ ────˚❀˚────⋄
 
 ⌈ MEDIA ⌋
 ${formatCmds(mediaCmds)}
 
-•◌────˚❀˚───◌ ────˚❀˚────
+•◌────˚❀˚───◌ ────˚❀˚────⋄
 
 ⌈ NSFW ⌋
 ${formatCmds(nsfwCmds)}
 
-•◌────˚❀˚───◌ ────˚❀˚───ـ
+•◌────˚❀˚───◌ ────˚❀˚─── ⋄ـ
 ⇒ 📊 المجموع: ${total} أمر
 ⇒ ℹ️ استخدم: ${prefix}[اسم_الأمر] لعرض التفاصيل
 `;
