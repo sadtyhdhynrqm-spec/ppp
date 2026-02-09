@@ -34,21 +34,18 @@ process.on("uncaughtException", (err) => {
   console.error(err);
 });
 
+// إشارات الإغلاق في راندر (ما نقفل البوت)
 process.on("SIGINT", shutdownSafe);
 process.on("SIGTERM", shutdownSafe);
 process.on("SIGHUP", shutdownSafe);
 
 function shutdownSafe() {
   try {
-    logger.system(getLang("build.start.exit"));
+    logger.system("Shutdown signal received, Render mode active.");
     global.listenMqtt?.stopListening?.();
   } catch {}
-  process.exit(0);
+  // ❌ ممنوع process.exit في راندر
 }
-
-process.stdout.write(
-  String.fromCharCode(27) + "]0;" + "Xavia" + String.fromCharCode(7)
-);
 
 /* =======================
    INIT
@@ -86,8 +83,12 @@ async function start() {
 
     await booting(api, xDatabase);
   } catch (err) {
-    logger.error(err);
-    process.exit(1);
+    logger.error("Start failed, retrying in 10 seconds...");
+    console.error(err);
+
+    setTimeout(() => {
+      start();
+    }, 10000);
   }
 }
 
@@ -108,23 +109,32 @@ async function booting(api, xDatabase) {
    MQTT (AUTO RECOVER)
 ======================= */
 async function startListen(api, xDatabase) {
-  const listenerID = generateListenerID();
-  global.listenerID = listenerID;
+  try {
+    const listenerID = generateListenerID();
+    global.listenerID = listenerID;
 
-  const listenHandler = await handleListen(listenerID, xDatabase);
-  global.listenMqtt = api.listenMqtt(listenHandler);
+    const listenHandler = await handleListen(listenerID, xDatabase);
+    global.listenMqtt = api.listenMqtt(listenHandler);
 
-  global.listenMqtt.on("error", async (err) => {
-    logger.error("MQTT connection lost, reconnecting...");
+    global.listenMqtt.on("error", async (err) => {
+      logger.error("MQTT connection lost, reconnecting...");
+      console.error(err);
+      await restartBot();
+    });
+
+    logger.custom("MQTT listener started (Render Safe).", "MQTT");
+  } catch (err) {
+    logger.error("Failed to start MQTT, retrying...");
     console.error(err);
-    await restartBot();
-  });
 
-  logger.custom("MQTT listener started (auto recover enabled).", "MQTT");
+    setTimeout(() => {
+      startListen(api, xDatabase);
+    }, 5000);
+  }
 }
 
 /* =======================
-   AUTO RECONNECT
+   AUTO RECONNECT (NO EXIT)
 ======================= */
 async function restartBot() {
   try {
@@ -143,8 +153,12 @@ async function restartBot() {
 
     logger.system("Bot reconnected successfully ✔");
   } catch (err) {
-    logger.error("Reconnect failed");
+    logger.error("Reconnect failed, retrying in 15s...");
     console.error(err);
+
+    setTimeout(() => {
+      restartBot();
+    }, 15000);
   }
 }
 
@@ -156,6 +170,8 @@ const _12HOUR = 1000 * 60 * 60 * 12;
 function refreshState() {
   setInterval(() => {
     try {
+      if (!global.api) return;
+
       const newAppState = global.api.getAppState();
 
       if (global.config.APPSTATE_PROTECTION === true) {
@@ -203,7 +219,7 @@ async function loginState() {
   const options = {
     ...global.config.FCA_OPTIONS,
 
-    enableAutoRefresh: true, // 🔴 سبب حل مشكلة 6 ساعات
+    enableAutoRefresh: true,
     forceLogin: false,
     listenEvents: true,
     selfListen: false,
