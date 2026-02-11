@@ -1,169 +1,249 @@
 import "../cleanup.js";
+
 import {} from "dotenv/config";
 import { writeFileSync } from "fs";
 import { resolve as resolvePath } from "path";
 import logger from "./var/modules/logger.js";
-import login from "rapido-fca";
+
+import login from "nexus-fca";
 import startServer from "./dashboard/server/app.js";
 import handleListen from "./handlers/listen.js";
-import environments from "./var/modules/environments.get.js";
-import _init_var from "./var/_init.js";
+import { isGlitch, isReplit } from "./var/modules/environments.get.js";
+import initializeVar from "./var/_init.js";
+import { getLang, loadPlugins } from "./var/modules/loader.js";
+
+import * as aes from "./var/modules/aes.js";
+import { checkAppstate } from "./var/modules/checkAppstate.js";
+
 import replitDB from "@replit/database";
-import { execSync } from "child_process";
-import { initDatabase, updateJSON, updateMONGO, _Threads, _Users } from "./handlers/database.js";
+import { XDatabase } from "./handlers/database.js";
+import { Assets } from "./handlers/assets.js";
+
 import crypto from "crypto";
 
-const { isGlitch, isReplit } = environments;
-
-process.stdout.write(String.fromCharCode(27) + "]0;" + "Xavia" + String.fromCharCode(7));
-
-process.on("unhandledRejection", (reason, p) => {
-    console.error(reason, "Unhandled Rejection at Promise", p);
+/* =======================
+   GLOBAL PROTECTION
+======================= */
+process.on("unhandledRejection", (err) => {
+  logger.error("Unhandled Rejection");
+  console.error(err);
 });
 
-process.on("uncaughtException", (err, origin) => {
-    logger.error("Uncaught Exception: " + err + ": " + origin);
+process.on("uncaughtException", (err) => {
+  logger.error("Uncaught Exception");
+  console.error(err);
 });
 
-process.on("SIGINT", shutdownBot);
-process.on("SIGTERM", shutdownBot);
-process.on("SIGHUP", shutdownBot);
+// إشارات الإغلاق في راندر (ما نقفل البوت)
+process.on("SIGINT", shutdownSafe);
+process.on("SIGTERM", shutdownSafe);
+process.on("SIGHUP", shutdownSafe);
 
+function shutdownSafe() {
+  try {
+    logger.system("Shutdown signal received, Render mode active.");
+    global.listenMqtt?.stopListening?.();
+  } catch {}
+  // ❌ ممنوع process.exit في راندر
+}
+
+/* =======================
+   INIT
+======================= */
+await initializeVar();
+
+/* =======================
+   START BOT
+======================= */
 async function start() {
-    try {
-        await _init_var();
-        logger.system(getLang("build.start.varLoaded"));
-        await initDatabase();
+  try {
+    console.clear();
+    logger.system(getLang("build.start.varLoaded"));
+    logger.custom(getLang("build.start.logging"), "LOGIN");
 
-        // نخزن فقط البيانات الأساسية لكل Thread و User لتقليل الرام
-        global.controllers = {
-            Threads: { get: _Threads.get, set: _Threads.set, fetchBasic: fetchBasicThreadData },
-            Users: { get: _Users.get, set: _Users.set, fetchBasic: fetchBasicUserData }
-        };
+    const api = await loginState();
+    global.api = api;
+    global.botID = api.getCurrentUserID();
 
-        const serverAdminPassword = getRandomPassword(8);
-        startServer(serverAdminPassword);
-        process.env.SERVER_ADMIN_PASSWORD = serverAdminPassword;
+    logger.custom(
+      getLang("build.start.logged", { botID: global.botID }),
+      "LOGIN"
+    );
 
-        await booting(logger);
-    } catch (err) {
-        logger.error(err);
-        shutdownBot();
-    }
+    const xDatabase = new XDatabase(api, global.config.DATABASE);
+    await xDatabase.init();
+
+    new Assets();
+    logger.custom(getLang("build.start.plugin.loading"), "LOADER");
+    await loadPlugins(xDatabase);
+
+    const serverAdminPassword = getRandomPassword(8);
+    process.env.SERVER_ADMIN_PASSWORD = serverAdminPassword;
+    startServer(serverAdminPassword);
+
+    await booting(api, xDatabase);
+  } catch (err) {
+    logger.error("Start failed, retrying in 10 seconds...");
+    console.error(err);
+
+    setTimeout(() => {
+      start();
+    }, 10000);
+  }
 }
 
-global.listenerID = null;
+/* =======================
+   BOOTING
+======================= */
+async function booting(api, xDatabase) {
+  global.controllers = {
+    Threads: xDatabase.threads,
+    Users: xDatabase.users,
+  };
 
-function booting(logger) {
-    return new Promise((resolve, reject) => {
-        logger.custom(getLang("build.booting.logging"), "LOGIN");
+  await startListen(api, xDatabase);
+  refreshState();
+}
 
-        loginState()
-            .then(async (api) => {
-                global.api = api;
-                global.botID = api.getCurrentUserID();
-                logger.custom(getLang("build.booting.logged", { botID }), "LOGIN");
+/* =======================
+   MQTT (AUTO RECOVER)
+======================= */
+async function startListen(api, xDatabase) {
+  try {
+    const listenerID = generateListenerID();
+    global.listenerID = listenerID;
 
-                refreshState(); // تحديث AppState بشكل اقتصادي
-                if (global.config.REFRESH) autoReloadApplication();
+    const listenHandler = await handleListen(listenerID, xDatabase);
+    global.listenMqtt = api.listenMqtt(listenHandler);
 
-                const newListenerID = generateListenerID();
-                global.listenerID = newListenerID;
-                global.listenMqtt = api.listenMqtt(await handleListen(newListenerID));
-
-                resolve();
-            })
-            .catch((err) => {
-                if (isGlitch && global.isExists(resolvePath(process.cwd(), ".data", "appstate.json"), "file")) {
-                    global.deleteFile(resolvePath(process.cwd(), ".data", "appstate.json"));
-                    execSync("refresh");
-                }
-                reject(err);
-            });
+    global.listenMqtt.on("error", async (err) => {
+      logger.error("MQTT connection lost, reconnecting...");
+      console.error(err);
+      await restartBot();
     });
+
+    logger.custom("MQTT listener started (Render Safe).", "MQTT");
+  } catch (err) {
+    logger.error("Failed to start MQTT, retrying...");
+    console.error(err);
+
+    setTimeout(() => {
+      startListen(api, xDatabase);
+    }, 5000);
+  }
 }
 
-// تحديث AppState بدون تخزين نسخة كبيرة في الرام
+/* =======================
+   AUTO RECONNECT (NO EXIT)
+======================= */
+async function restartBot() {
+  try {
+    global.listenMqtt?.stopListening?.();
+
+    logger.system("Reconnecting Facebook session...");
+
+    const api = await loginState();
+    global.api = api;
+    global.botID = api.getCurrentUserID();
+
+    const xDatabase = new XDatabase(api, global.config.DATABASE);
+    await xDatabase.init();
+
+    await booting(api, xDatabase);
+
+    logger.system("Bot reconnected successfully ✔");
+  } catch (err) {
+    logger.error("Reconnect failed, retrying in 15s...");
+    console.error(err);
+
+    setTimeout(() => {
+      restartBot();
+    }, 15000);
+  }
+}
+
+/* =======================
+   APPSTATE SAVE (12H)
+======================= */
 const _12HOUR = 1000 * 60 * 60 * 12;
+
 function refreshState() {
-    global.refreshState = setInterval(async () => {
-        logger.custom(getLang("build.refreshState"), "REFRESH");
-        try {
-            const newAppState = global.api.getAppState();
-            if (global.config.APPSTATE_PROTECTION) {
-                if (isGlitch) {
-                    writeFileSync(resolvePath(process.cwd(), ".data", "appstate.json"), JSON.stringify(newAppState, null, 2), "utf-8");
-                } else if (isReplit) {
-                    const db = new replitDB();
-                    const APPSTATE_SECRET_KEY = await db.get("APPSTATE_SECRET_KEY");
-                    if (APPSTATE_SECRET_KEY) {
-                        const encryptedAppState = global.modules.get("aes").encrypt(JSON.stringify(newAppState), APPSTATE_SECRET_KEY);
-                        writeFileSync(resolvePath(global.config.APPSTATE_PATH), JSON.stringify(encryptedAppState), "utf8");
-                    }
-                }
-            } else {
-                writeFileSync(resolvePath(global.config.APPSTATE_PATH), JSON.stringify(newAppState, null, 2), "utf8");
-            }
-        } catch (err) {
-            console.error("Error refreshing AppState:", err);
+  setInterval(() => {
+    try {
+      if (!global.api) return;
+
+      const newAppState = global.api.getAppState();
+
+      if (global.config.APPSTATE_PROTECTION === true) {
+        if (isGlitch) {
+          writeFileSync(
+            resolvePath(process.cwd(), ".data", "appstate.json"),
+            JSON.stringify(newAppState, null, 2)
+          );
+        } else if (isReplit) {
+          const db = new replitDB();
+          db.get("APPSTATE_SECRET_KEY").then((key) => {
+            if (!key) return;
+            const encrypted = aes.encrypt(
+              JSON.stringify(newAppState),
+              key
+            );
+            writeFileSync(
+              resolvePath(global.config.APPSTATE_PATH),
+              JSON.stringify(encrypted)
+            );
+          });
         }
-    }, _12HOUR);
+      } else {
+        writeFileSync(
+          resolvePath(global.config.APPSTATE_PATH),
+          JSON.stringify(newAppState, null, 2)
+        );
+      }
+    } catch (e) {
+      logger.error("Failed to refresh appstate");
+      console.error(e);
+    }
+  }, _12HOUR);
 }
 
-// Listener يبقى مستمر بدون إعادة إنشاء متكررة
-const _6HOUR = 1000 * 60 * 60 * 6;
-function refreshMqtt() {
-    global.refreshMqtt = setInterval(async () => {
-        logger.custom(getLang("build.refreshMqtt"), "REFRESH");
-        const newListenerID = generateListenerID();
-        global.listenMqtt.stopListening();
-        global.listenerID = newListenerID;
-        global.listenMqtt = global.api.listenMqtt(await handleListen(newListenerID));
-    }, _6HOUR);
+/* =======================
+   LOGIN
+======================= */
+async function loginState() {
+  const appState = await checkAppstate(
+    global.config.APPSTATE_PATH,
+    global.config.APPSTATE_PROTECTION
+  );
+
+  const options = {
+    ...global.config.FCA_OPTIONS,
+
+    enableAutoRefresh: true,
+    forceLogin: false,
+    listenEvents: true,
+    selfListen: false,
+
+    ultraLowBanMode: true,
+    enableAntiDetection: true,
+    enableHumanBehavior: true,
+  };
+
+  return await login({ appState }, options);
 }
 
-// توليد Listener ID
+/* =======================
+   UTILS
+======================= */
 function generateListenerID() {
-    return Date.now() + crypto.randomBytes(4).toString('hex');
+  return Date.now() + crypto.randomBytes(4).toString("hex");
 }
 
-// إعادة تشغيل تلقائي إذا REFRESH مفعل
-function autoReloadApplication() {
-    setTimeout(() => global.restart(), global.config.REFRESH);
+function getRandomPassword(length = 8) {
+  return crypto.randomBytes(length).toString("hex").slice(0, length);
 }
 
-function loginState() {
-    const { APPSTATE_PATH, APPSTATE_PROTECTION, FCA_OPTIONS } = global.config;
-
-    return new Promise((resolve, reject) => {
-        global.modules.get("checkAppstate")(APPSTATE_PATH, APPSTATE_PROTECTION)
-            .then((appState) => {
-                login({ appState }, FCA_OPTIONS, (error, api) => {
-                    if (error) return reject(error.error || error);
-                    resolve(api);
-                });
-            })
-            .catch(reject);
-    });
-}
-
-function shutdownBot() {
-    logger.system(getLang("build.start.exit"));
-    if (global.refreshState) clearInterval(global.refreshState);
-    if (global.refreshMqtt) clearInterval(global.refreshMqtt);
-    if (global.listenMqtt) global.listenMqtt.stopListening();
-    global.shutdown();
-}
-
-// ===========================
-// دوال لتقليل حجم البيانات المخزنة في الرام
-// ===========================
-function fetchBasicThreadData(thread) {
-    return { id: thread.id, settings: thread.settings };
-}
-
-function fetchBasicUserData(user) {
-    return { id: user.id, info: user.info };
-}
-
+/* =======================
+   RUN
+======================= */
 start();
